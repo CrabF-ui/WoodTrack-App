@@ -39,6 +39,28 @@ fun DeliveriesScreen(
     onLogout: () -> Unit
 ) {
 
+    var confirmarSalida by remember { mutableStateOf(false) }
+
+    if (confirmarSalida) {
+        AlertDialog(
+            onDismissRequest = { confirmarSalida = false },
+            title = { Text("¿Cerrar sesión?") },
+            text = { Text("Tendrás que volver a ingresar con tu correo y contraseña.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmarSalida = false
+                    onLogout()
+                }) {
+                    Text("Cerrar sesión", color = Rojo)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmarSalida = false }) {
+                    Text("Cancelar", color = Cafe)
+                }
+            }
+        )
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -68,7 +90,7 @@ fun DeliveriesScreen(
                     )
                 }
 
-                IconButton(onClick = onLogout) {
+                IconButton(onClick = { confirmarSalida = true }) {
                     Icon(
                         Icons.Default.Person,
                         contentDescription = "Cerrar sesión",

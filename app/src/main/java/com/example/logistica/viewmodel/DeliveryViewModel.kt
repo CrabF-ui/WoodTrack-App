@@ -132,4 +132,13 @@ class DeliveryViewModel(
                 }
         }
     }
+
+    fun cerrarSesion(onListo: () -> Unit) {
+        viewModelScope.launch {
+            repository.cerrarSesion()
+            // Limpia las entregas del chofer anterior
+            _estado.value = DeliveryUiState()
+            onListo()
+        }
+    }
 }

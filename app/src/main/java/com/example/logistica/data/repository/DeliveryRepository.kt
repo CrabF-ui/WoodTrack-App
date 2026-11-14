@@ -180,23 +180,18 @@ class DeliveryRepository(
         }
     }
 
-    // ---------- CERRAR SESIÓN (se termina en la Parte 6) ----------
-    suspend fun cerrarSesion(): Result<String> {
+    // ---------- SESIÓN ----------
+    fun haySesion(): Boolean = !tokenManager.obtenerToken().isNullOrBlank()
 
-        return try {
-            val response = api.cerrarSesion()
-
-            if (response.isSuccessful) {
-                tokenManager.eliminarToken()
-                Result.success("Sesión cerrada correctamente")
-            } else {
-                Result.failure(Exception(mensajeDeError(response)))
-            }
-
-        } catch (e: IOException) {
-            Result.failure(Exception("No se pudo conectar con el servidor. Revisa tu conexión."))
+    // Avisa a la API y borra el token. Aunque no haya internet,
+    // el token se borra del celular para que el chofer pueda salir.
+    suspend fun cerrarSesion() {
+        try {
+            api.cerrarSesion()
         } catch (e: Exception) {
-            Result.failure(e)
+            // Sin conexión: igual se cierra la sesión en el celular
+        } finally {
+            tokenManager.eliminarToken()
         }
     }
 

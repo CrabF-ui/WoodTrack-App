@@ -15,6 +15,7 @@ import com.example.logistica.viewmodel.LoginViewModel
 import com.example.logistica.viewmodel.appViewModelFactory
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
+import com.example.logistica.data.remote.SesionEvents
 
 @Composable
 fun AppNavigation(
@@ -31,9 +32,12 @@ fun AppNavigation(
         navArgument("id") { type = NavType.IntType }
     )
 
+    // Si ya hay token guardado, abre directo en las entregas
+    val inicio = remember { if (repository.haySesion()) "entregas" else "login" }
+
     NavHost(
         navController = navController,
-        startDestination = "login"
+        startDestination = inicio
     ) {
 
         // INICIO DE SESIÓN
@@ -79,8 +83,10 @@ fun AppNavigation(
                     navController.navigate("detalle/$id")
                 },
                 onLogout = {
-                    navController.navigate("login") {
-                        popUpTo("entregas") { inclusive = true }
+                    deliveryViewModel.cerrarSesion {
+                        navController.navigate("login") {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                        }
                     }
                 }
             )
@@ -258,6 +264,25 @@ fun AppNavigation(
                     }
                 }
             )
+        }
+
+    }
+
+    // Token vencido (401) en cualquier pantalla → regresar al login
+    val contexto = LocalContext.current
+    val sesionExpirada by SesionEvents.expirada.collectAsStateWithLifecycle()
+
+    LaunchedEffect(sesionExpirada) {
+        if (sesionExpirada) {
+            SesionEvents.reiniciar()
+            Toast.makeText(
+                contexto,
+                "Tu sesión expiró. Inicia sesión de nuevo.",
+                Toast.LENGTH_LONG
+            ).show()
+            navController.navigate("login") {
+                popUpTo(navController.graph.id) { inclusive = true }
+            }
         }
     }
 }

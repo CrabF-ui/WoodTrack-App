@@ -37,7 +37,18 @@ object RetrofitClient {
                     .addHeader("Accept", "application/json")
                     .build()
 
-                chain.proceed(solicitudNueva)
+                val respuesta = chain.proceed(solicitudNueva)
+
+                // 401 = token vencido o inválido → regresar al login
+                // (en el login un 401 no aplica, ahí los errores son 422)
+                if (respuesta.code == 401 &&
+                    !solicitudOriginal.url.encodedPath.endsWith("/login")
+                ) {
+                    tokenManager.eliminarToken()
+                    SesionEvents.notificarExpirada()
+                }
+
+                respuesta
             }
             .addInterceptor(logging)
             .connectTimeout(15, TimeUnit.SECONDS)
