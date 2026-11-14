@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.logistica.components.*
 import com.example.logistica.ui.theme.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 @Composable
 fun IncidentSavedScreen(
@@ -31,10 +33,11 @@ fun IncidentSavedScreen(
             .background(Fondo)
             .statusBarsPadding()
             .navigationBarsPadding()
+            .verticalScroll(rememberScrollState())
             .padding(20.dp)
     ) {
 
-        Spacer(Modifier.height(65.dp))
+        Spacer(Modifier.height(30.dp))
 
         Box(
             modifier = Modifier
@@ -102,7 +105,7 @@ fun IncidentSavedScreen(
             }
         }
 
-        Spacer(Modifier.weight(1f))
+        Spacer(Modifier.height(24.dp))
 
         PrimaryButton(
             "Volver a mis entregas",
