@@ -2,7 +2,9 @@ package com.example.logistica.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -32,140 +34,159 @@ fun DeliveryDetailScreen(
             .fillMaxSize()
             .background(Fondo)
             .statusBarsPadding()
-            .navigationBarsPadding()
-            .padding(18.dp)
+            .navigationBarsPadding()   // no quedar debajo de ◁ ○ □
     ) {
 
-        // Si la entrega ya no está en la lista (por ejemplo, se cerró)
+        // Si la entrega ya no está en la lista
         if (entrega == null) {
-            ScreenHeader("Detalle de entrega", "", onBack)
-
-            Text(
-                if (cargando) "Cargando entrega..."
-                else "No se encontró la entrega. Regresa y toca Sincronizar.",
-                color = TextoSecundario,
-                fontSize = 13.sp
-            )
+            Column(Modifier.padding(18.dp)) {
+                ScreenHeader("Detalle de entrega", "", onBack)
+                Text(
+                    if (cargando) "Cargando entrega..."
+                    else "No se encontró la entrega. Regresa y toca Sincronizar.",
+                    color = TextoSecundario,
+                    fontSize = 13.sp
+                )
+            }
             return@Column
         }
 
         val pedido = entrega.pedido
         val totalPiezas = pedido.productos.sumOf { it.cantidad }
 
-        ScreenHeader(
-            "Detalle de entrega",
-            "Pedido #${pedido.id}",
-            onBack
-        )
-
-        Card(
-            shape = RoundedCornerShape(17.dp),
-            colors = CardDefaults.cardColors(containerColor = Blanco)
+        // ---------- PARTE DE ARRIBA: información con scroll ----------
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(start = 18.dp, end = 18.dp, top = 18.dp)
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(14.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
 
-                Box(
-                    modifier = Modifier
-                        .size(65.dp)
-                        .background(FondoNaranja, RoundedCornerShape(12.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.Default.Home,
-                        null,
-                        tint = Cafe,
-                        modifier = Modifier.size(34.dp)
-                    )
-                }
-
-                Spacer(Modifier.width(12.dp))
-
-                Column {
-                    StatusLabel(textoEstado(entrega.estado))
-
-                    Spacer(Modifier.height(5.dp))
-
-                    Text(
-                        pedido.productos.joinToString {
-                            "${it.cantidad} × ${it.producto}"
-                        },
-                        color = Texto,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.sp
-                    )
-
-                    Text(
-                        "$totalPiezas piezas · Entrega ${entrega.fecha_asignada}",
-                        color = TextoSecundario,
-                        fontSize = 11.sp
-                    )
-                }
-            }
-        }
-
-        Spacer(Modifier.height(10.dp))
-
-        DetailCard(
-            "CLIENTE",
-            if (pedido.telefono.isNullOrBlank()) pedido.cliente
-            else "${pedido.cliente} · ${pedido.telefono}",
-            Icons.Default.Person
-        )
-
-        DetailCard(
-            "DIRECCIÓN",
-            pedido.direccion,
-            Icons.Default.LocationOn
-        )
-
-        DetailCard(
-            "NOTAS",
-            entrega.notas ?: "Sin notas",
-            Icons.Default.Description
-        )
-
-        Spacer(Modifier.weight(1f))
-
-        // Solo se puede entregar si está "en camino"
-        if (entrega.estado == "en_camino") {
-            PrimaryButton(
-                "Registrar entrega",
-                Icons.Default.CheckCircle,
-                onDeliver
+            ScreenHeader(
+                "Detalle de entrega",
+                "Pedido #${pedido.id}",
+                onBack
             )
 
+            Card(
+                shape = RoundedCornerShape(17.dp),
+                colors = CardDefaults.cardColors(containerColor = Blanco)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    Box(
+                        modifier = Modifier
+                            .size(65.dp)
+                            .background(FondoNaranja, RoundedCornerShape(12.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.Home,
+                            null,
+                            tint = Cafe,
+                            modifier = Modifier.size(34.dp)
+                        )
+                    }
+
+                    Spacer(Modifier.width(12.dp))
+
+                    Column {
+                        StatusLabel(textoEstado(entrega.estado))
+
+                        Spacer(Modifier.height(5.dp))
+
+                        Text(
+                            pedido.productos.joinToString {
+                                "${it.cantidad} × ${it.producto}"
+                            },
+                            color = Texto,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp
+                        )
+
+                        Text(
+                            "$totalPiezas piezas · Entrega ${entrega.fecha_asignada}",
+                            color = TextoSecundario,
+                            fontSize = 11.sp
+                        )
+                    }
+                }
+            }
+
             Spacer(Modifier.height(10.dp))
+
+            DetailCard(
+                "CLIENTE",
+                if (pedido.telefono.isNullOrBlank()) pedido.cliente
+                else "${pedido.cliente} · ${pedido.telefono}",
+                Icons.Default.Person
+            )
+
+            DetailCard(
+                "DIRECCIÓN",
+                pedido.direccion,
+                Icons.Default.LocationOn
+            )
+
+            DetailCard(
+                "NOTAS",
+                entrega.notas ?: "Sin notas",
+                Icons.Default.Description
+            )
+
+            Text(
+                "Verifica los productos antes de marcar la entrega.",
+                color = Naranja,
+                fontSize = 10.sp,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
         }
-        PrimaryButton(
-            "Abrir en Google Maps",
-            Icons.Default.Navigation
+
+        // ---------- PARTE DE ABAJO: botones fijos ----------
+        HorizontalDivider(color = FondoNaranja)
+
+        Column(
+            modifier = Modifier
+                .background(Fondo)
+                .padding(horizontal = 18.dp, vertical = 10.dp)
         ) {
-            onMap(pedido.direccion)
+
+            // Solo se puede entregar si está "en camino"
+            if (entrega.estado == "en_camino") {
+                PrimaryButton(
+                    "Registrar entrega",
+                    Icons.Default.CheckCircle,
+                    onDeliver
+                )
+
+                Spacer(Modifier.height(8.dp))
+            }
+
+            PrimaryButton(
+                "Abrir en Google Maps",
+                Icons.Default.Navigation
+            ) {
+                onMap(pedido.direccion)
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            SecondaryButton(
+                "Actualizar estado",
+                onUpdate
+            )
+
+            TextButton(
+                onClick = onIncident,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Registrar incidencia", color = Rojo)
+            }
         }
-
-        Spacer(Modifier.height(10.dp))
-
-        SecondaryButton(
-            "Actualizar estado",
-            onUpdate
-        )
-
-        TextButton(
-            onClick = onIncident,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Registrar incidencia", color = Rojo)
-        }
-
-        Text(
-            "Verifica los productos antes de marcar la entrega.",
-            color = Naranja,
-            fontSize = 10.sp
-        )
     }
 }
