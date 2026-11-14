@@ -70,6 +70,7 @@ class MainActivity : ComponentActivity() {
                 ) {
 
                     AppNavigation(
+                        repository = repository,
                         abrirMapa = {
                             abrirGoogleMaps()
                         }

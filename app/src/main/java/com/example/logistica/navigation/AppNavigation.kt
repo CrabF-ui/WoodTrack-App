@@ -7,15 +7,23 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.logistica.data.repository.DeliveryRepository
+import com.example.logistica.viewmodel.LoginViewModel
+import com.example.logistica.viewmodel.appViewModelFactory
 
 import com.example.logistica.screens.*
 
+
 @Composable
 fun AppNavigation(
+    repository: DeliveryRepository,
     abrirMapa: () -> Unit
 ) {
 
     val navController = rememberNavController()
+    val factory = remember(repository) { appViewModelFactory(repository) }
 
     var estadoPedido by remember {
         mutableStateOf("Pendiente")
@@ -36,13 +44,23 @@ fun AppNavigation(
 
         // INICIO DE SESIÓN
         composable("login") {
-            LoginScreen(
-                onLogin = {
+            val loginViewModel: LoginViewModel = viewModel(factory = factory)
+            val estado by loginViewModel.estado.collectAsStateWithLifecycle()
+
+            LaunchedEffect(estado.sesionIniciada) {
+                if (estado.sesionIniciada) {
+                    loginViewModel.sesionNavegada()
                     navController.navigate("entregas") {
-                        popUpTo("login") {
-                            inclusive = true
-                        }
+                        popUpTo("login") { inclusive = true }
                     }
+                }
+            }
+
+            LoginScreen(
+                cargando = estado.cargando,
+                mensajeError = estado.error,
+                onLogin = { email, password ->
+                    loginViewModel.iniciarSesion(email, password)
                 }
             )
         }

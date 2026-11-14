@@ -4,6 +4,10 @@ import com.example.logistica.data.model.Delivery
 import com.example.logistica.data.model.LoginRequest
 import com.example.logistica.data.remote.ApiService
 import com.example.logistica.data.remote.TokenManager
+import com.example.logistica.data.model.User
+import org.json.JSONObject
+import retrofit2.Response
+import java.io.IOException
 
 class DeliveryRepository(
     private val api: ApiService,
@@ -13,7 +17,7 @@ class DeliveryRepository(
     suspend fun iniciarSesion(
         email: String,
         password: String
-    ): Result<String> {
+    ): Result<User> {
 
         return try {
             val response = api.iniciarSesion(
@@ -21,22 +25,17 @@ class DeliveryRepository(
             )
 
             if (response.isSuccessful) {
-
                 val resultado = response.body()
-                    ?: return Result.failure(
-                        Exception("El servidor no devolvió información")
-                    )
+                    ?: return Result.failure(Exception("El servidor no devolvió información"))
 
                 tokenManager.guardarToken(resultado.token)
-
-                Result.success(resultado.message ?: "Inicio de sesión correcto")
-
+                Result.success(resultado.user)
             } else {
-                Result.failure(
-                    Exception("Credenciales incorrectas o error del servidor: ${response.code()}")
-                )
+                Result.failure(Exception(mensajeDeError(response)))
             }
 
+        } catch (e: IOException) {
+            Result.failure(Exception("No se pudo conectar con el servidor. Revisa tu conexión."))
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -129,6 +128,22 @@ class DeliveryRepository(
 
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+    // Lee el "message" que manda Laravel (ya viene en español)
+    private fun mensajeDeError(response: Response<*>): String {
+        val cuerpo = response.errorBody()?.string()
+
+        val mensaje = try {
+            JSONObject(cuerpo ?: "").optString("message")
+        } catch (e: Exception) {
+            ""
+        }
+
+        return when {
+            mensaje.isNotBlank() -> mensaje
+            response.code() == 401 -> "Tu sesión expiró. Inicia sesión de nuevo."
+            else -> "Error del servidor (${response.code()})"
         }
     }
 }
