@@ -71,8 +71,8 @@ class MainActivity : ComponentActivity() {
 
                     AppNavigation(
                         repository = repository,
-                        abrirMapa = {
-                            abrirGoogleMaps()
+                        abrirMapa = { direccion ->
+                            abrirGoogleMaps(direccion)
                         }
                     )
                 }
@@ -81,16 +81,15 @@ class MainActivity : ComponentActivity() {
     }
 
     // Abrir Google Maps
-    private fun abrirGoogleMaps() {
+    // Abrir Google Maps con la dirección del pedido
+    private fun abrirGoogleMaps(direccion: String) {
 
-        val direccion = Uri.encode(
-            "Av. Las Torres 184, Col. Centro, Guadalajara, Jalisco"
-        )
+        val consulta = Uri.encode(direccion)
 
         val intent = Intent(
             Intent.ACTION_VIEW,
             Uri.parse(
-                "https://www.google.com/maps/search/?api=1&query=$direccion"
+                "https://www.google.com/maps/search/?api=1&query=$consulta"
             )
         )
 

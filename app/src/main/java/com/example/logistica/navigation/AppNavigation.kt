@@ -20,7 +20,7 @@ import com.example.logistica.screens.*
 @Composable
 fun AppNavigation(
     repository: DeliveryRepository,
-    abrirMapa: () -> Unit
+    abrirMapa: (String) -> Unit
 ) {
 
     val navController = rememberNavController()
@@ -104,12 +104,27 @@ fun AppNavigation(
                     type = NavType.IntType
                 }
             )
-        ) {
+        ) { backStackEntry ->
+
+            val id = backStackEntry.arguments?.getInt("id") ?: 0
+            val estado by deliveryViewModel.estado.collectAsStateWithLifecycle()
+            val entrega = estado.entregas.find { it.id == id }
+            // Si Android cerró la app (por ejemplo, al ir a Maps), recarga la lista
+            LaunchedEffect(id) {
+                if (entrega == null) {
+                    deliveryViewModel.cargarEntregas()
+                }
+            }
+
             DeliveryDetailScreen(
+                entrega = entrega,
+                cargando = estado.cargando,
                 onBack = {
                     navController.popBackStack()
                 },
-                onMap = abrirMapa,
+                onMap = { direccion ->
+                    abrirMapa(direccion)
+                },
                 onUpdate = {
                     navController.navigate("estado")
                 },
