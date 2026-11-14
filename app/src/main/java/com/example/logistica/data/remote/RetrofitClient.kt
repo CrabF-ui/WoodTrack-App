@@ -9,7 +9,8 @@ object RetrofitClient {
 
     // Dirección local de ejemplo.
     // Cambiarla cuando conozcas la dirección real del backend.
-    private const val BASE_URL = "http://10.0.2.2:8000/api/"
+    private const val BASE_URL = "http://192.168.100.11:8000/api/"
+    //
 
     fun crearApi(tokenManager: TokenManager): ApiService {
 
