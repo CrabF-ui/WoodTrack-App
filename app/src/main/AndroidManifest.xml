@@ -8,10 +8,11 @@
         android:allowBackup="true"
         android:label="Logistica"
         android:supportsRtl="true"
+        android:usesCleartextTraffic="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
 
         <activity
-            android:name=".MainActivity"
+            android:name=".com.example.logistica.MainActivity"
             android:exported="true">
 
             <intent-filter>
