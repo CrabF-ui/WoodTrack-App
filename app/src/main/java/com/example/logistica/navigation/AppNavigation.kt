@@ -1,21 +1,18 @@
-
 package com.example.logistica.navigation
 
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.logistica.data.repository.DeliveryRepository
+import com.example.logistica.screens.*
+import com.example.logistica.viewmodel.DeliveryViewModel
 import com.example.logistica.viewmodel.LoginViewModel
 import com.example.logistica.viewmodel.appViewModelFactory
-import com.example.logistica.viewmodel.DeliveryViewModel
-
-import com.example.logistica.screens.*
-
 
 @Composable
 fun AppNavigation(
@@ -27,17 +24,10 @@ fun AppNavigation(
     val factory = remember(repository) { appViewModelFactory(repository) }
     val deliveryViewModel: DeliveryViewModel = viewModel(factory = factory)
 
-    var estadoPedido by remember {
-        mutableStateOf("Pendiente")
-    }
-
-    var motivoIncidencia by remember {
-        mutableStateOf("Cliente ausente")
-    }
-
-    var notasIncidencia by remember {
-        mutableStateOf("")
-    }
+    // Argumento "id" que usan varias rutas
+    val argumentoId = listOf(
+        navArgument("id") { type = NavType.IntType }
+    )
 
     NavHost(
         navController = navController,
@@ -88,9 +78,7 @@ fun AppNavigation(
                 },
                 onLogout = {
                     navController.navigate("login") {
-                        popUpTo("entregas") {
-                            inclusive = true
-                        }
+                        popUpTo("entregas") { inclusive = true }
                     }
                 }
             )
@@ -99,16 +87,13 @@ fun AppNavigation(
         // DETALLE DE ENTREGA
         composable(
             route = "detalle/{id}",
-            arguments = listOf(
-                navArgument("id") {
-                    type = NavType.IntType
-                }
-            )
+            arguments = argumentoId
         ) { backStackEntry ->
 
             val id = backStackEntry.arguments?.getInt("id") ?: 0
             val estado by deliveryViewModel.estado.collectAsStateWithLifecycle()
             val entrega = estado.entregas.find { it.id == id }
+
             // Si Android cerró la app (por ejemplo, al ir a Maps), recarga la lista
             LaunchedEffect(id) {
                 if (entrega == null) {
@@ -126,59 +111,98 @@ fun AppNavigation(
                     abrirMapa(direccion)
                 },
                 onUpdate = {
-                    navController.navigate("estado")
+                    navController.navigate("estado/$id")
                 },
                 onIncident = {
-                    navController.navigate("incidencia")
+                    navController.navigate("incidencia/$id")
                 }
             )
         }
 
         // ACTUALIZAR ESTADO
-        composable("estado") {
+        composable(
+            route = "estado/{id}",
+            arguments = argumentoId
+        ) { backStackEntry ->
+
+            val id = backStackEntry.arguments?.getInt("id") ?: 0
+            val estado by deliveryViewModel.estado.collectAsStateWithLifecycle()
+            val entrega = estado.entregas.find { it.id == id }
+
+            LaunchedEffect(Unit) {
+                deliveryViewModel.limpiarErrorAccion()
+            }
+
             UpdateStatusScreen(
-                estadoActual = estadoPedido,
+                entrega = entrega,
+                guardando = estado.guardando,
+                error = estado.errorAccion,
                 onBack = {
                     navController.popBackStack()
                 },
                 onSave = { nuevoEstado ->
-                    estadoPedido = nuevoEstado
-                    navController.popBackStack()
+                    deliveryViewModel.actualizarEstado(id, nuevoEstado) {
+                        // Al guardar, regresa al detalle
+                        navController.popBackStack()
+                    }
                 },
                 onIncident = {
-                    navController.navigate("incidencia")
+                    navController.navigate("incidencia/$id")
                 }
             )
         }
 
         // REGISTRAR INCIDENCIA
-        composable("incidencia") {
+        composable(
+            route = "incidencia/{id}",
+            arguments = argumentoId
+        ) { backStackEntry ->
+
+            val id = backStackEntry.arguments?.getInt("id") ?: 0
+            val estado by deliveryViewModel.estado.collectAsStateWithLifecycle()
+            val entrega = estado.entregas.find { it.id == id }
+
+            LaunchedEffect(Unit) {
+                deliveryViewModel.limpiarErrorAccion()
+            }
+
             IncidentScreen(
+                entrega = entrega,
+                guardando = estado.guardando,
+                error = estado.errorAccion,
                 onBack = {
                     navController.popBackStack()
                 },
-                onSave = { motivo, notas ->
-                    motivoIncidencia = motivo
-                    notasIncidencia = notas
-
-                    navController.navigate("incidenciaGuardada")
+                onSave = { motivo ->
+                    deliveryViewModel.registrarIncidencia(id, motivo) {
+                        navController.navigate("incidenciaGuardada") {
+                            // Quita detalle/estado/incidencia del historial
+                            popUpTo("entregas")
+                        }
+                    }
                 }
             )
         }
 
         // INCIDENCIA REGISTRADA
         composable("incidenciaGuardada") {
+            val estado by deliveryViewModel.estado.collectAsStateWithLifecycle()
+            val incidencia = estado.ultimaIncidencia
+
+            // "2026-11-13T10:15:00-06:00" -> "10:15"
+            val hora = incidencia?.estado_fecha_hora
+                ?.takeIf { it.length >= 16 }
+                ?.substring(11, 16)
+                ?: "--:--"
+
             IncidentSavedScreen(
-                motivo = motivoIncidencia,
+                motivo = estado.motivoIncidencia ?: "",
+                pedido = if (incidencia != null) "Pedido #${incidencia.pedido.id}" else "",
+                hora = hora,
                 onHome = {
                     navController.navigate("entregas") {
-                        popUpTo("entregas") {
-                            inclusive = true
-                        }
+                        popUpTo("entregas") { inclusive = true }
                     }
-                },
-                onDetail = {
-                    navController.navigate("detalle/1")
                 }
             )
         }
@@ -188,9 +212,7 @@ fun AppNavigation(
             EmptyDeliveriesScreen(
                 onRetry = {
                     navController.navigate("entregas") {
-                        popUpTo("sinEntregas") {
-                            inclusive = true
-                        }
+                        popUpTo("sinEntregas") { inclusive = true }
                     }
                 }
             )

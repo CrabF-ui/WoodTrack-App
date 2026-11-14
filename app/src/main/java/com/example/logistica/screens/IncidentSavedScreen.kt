@@ -5,23 +5,24 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontWeight
 import com.example.logistica.components.*
 import com.example.logistica.ui.theme.*
 
 @Composable
 fun IncidentSavedScreen(
     motivo: String,
-    onHome: () -> Unit,
-    onDetail: () -> Unit
+    pedido: String,
+    hora: String,
+    onHome: () -> Unit
 ) {
 
     Column(
@@ -43,7 +44,7 @@ fun IncidentSavedScreen(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                Icons.Default.CloudUpload,
+                Icons.Default.CheckCircle,
                 null,
                 tint = Naranja,
                 modifier = Modifier.size(35.dp)
@@ -53,7 +54,7 @@ fun IncidentSavedScreen(
         Spacer(Modifier.height(22.dp))
 
         Text(
-            "Guardado en este equipo",
+            "Incidencia registrada",
             color = Texto,
             fontSize = 22.sp,
             fontWeight = FontWeight.SemiBold,
@@ -63,44 +64,32 @@ fun IncidentSavedScreen(
         Spacer(Modifier.height(8.dp))
 
         Text(
-            "Registramos \"$motivo\". No necesitas repetir el proceso.",
+            "Planta ya puede ver el motivo. La entrega quedó cerrada.",
             color = TextoSecundario,
-            fontSize = 12.sp
+            fontSize = 12.sp,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 
         Spacer(Modifier.height(20.dp))
 
-        InfoBanner(
-            "Sincronización pendiente",
-            "Se enviará al recuperar la conexión.",
-            FondoNaranja,
-            Naranja
-        )
-
-        Spacer(Modifier.height(18.dp))
-
         Card(
-            colors = CardDefaults.cardColors(
-                containerColor = Blanco
-            ),
+            colors = CardDefaults.cardColors(containerColor = Blanco),
             shape = RoundedCornerShape(14.dp)
         ) {
-            Column(
-                Modifier.padding(15.dp)
-            ) {
+            Column(Modifier.padding(15.dp)) {
 
                 Row(Modifier.fillMaxWidth()) {
                     Text("Pedido", color = TextoSecundario)
                     Spacer(Modifier.weight(1f))
-                    Text("PED-4821", color = Texto)
+                    Text(pedido, color = Texto)
                 }
 
                 Spacer(Modifier.height(12.dp))
 
                 Row(Modifier.fillMaxWidth()) {
                     Text("Motivo", color = TextoSecundario)
-                    Spacer(Modifier.weight(1f))
-                    Text(motivo, color = Texto)
+                    Spacer(Modifier.width(16.dp))
+                    Text(motivo, color = Texto, modifier = Modifier.weight(1f))
                 }
 
                 Spacer(Modifier.height(12.dp))
@@ -108,7 +97,7 @@ fun IncidentSavedScreen(
                 Row(Modifier.fillMaxWidth()) {
                     Text("Hora", color = TextoSecundario)
                     Spacer(Modifier.weight(1f))
-                    Text("11:28", color = Texto)
+                    Text(hora, color = Texto)
                 }
             }
         }
@@ -119,13 +108,6 @@ fun IncidentSavedScreen(
             "Volver a mis entregas",
             Icons.Default.LocalShipping,
             onHome
-        )
-
-        Spacer(Modifier.height(10.dp))
-
-        SecondaryButton(
-            "Ver detalle",
-            onDetail
         )
     }
 }

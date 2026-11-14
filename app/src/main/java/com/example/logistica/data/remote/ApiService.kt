@@ -33,4 +33,12 @@ interface ApiService {
         @Path("id") id: Int,
         @Body estado: Map<String, String>
     ): Response<EntregaResponse>
+
+
+    // Registrar incidencia (motivo de 10 caracteres o más)
+    @POST("entregas/{id}/incidencia")
+    suspend fun registrarIncidencia(
+        @Path("id") id: Int,
+        @Body motivo: Map<String, String>
+    ): Response<EntregaResponse>
 }

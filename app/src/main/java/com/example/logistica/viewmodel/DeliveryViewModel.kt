@@ -2,19 +2,25 @@ package com.example.logistica.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-
 import com.example.logistica.data.model.Delivery
 import com.example.logistica.data.repository.DeliveryRepository
-
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class DeliveryUiState(
     val entregas: List<Delivery> = emptyList(),
     val cargando: Boolean = false,
     val error: String? = null,
-    val mensaje: String? = null
+
+    // Para guardar estado / incidencia
+    val guardando: Boolean = false,
+    val errorAccion: String? = null,
+
+    // Para la pantalla de "incidencia registrada"
+    val ultimaIncidencia: Delivery? = null,
+    val motivoIncidencia: String? = null
 )
 
 class DeliveryViewModel(
@@ -22,70 +28,75 @@ class DeliveryViewModel(
 ) : ViewModel() {
 
     private val _estado = MutableStateFlow(DeliveryUiState())
-
     val estado: StateFlow<DeliveryUiState> = _estado
 
     fun nombreUsuario(): String? = repository.nombreUsuario()
 
     fun cargarEntregas() {
-
         viewModelScope.launch {
+            _estado.update { it.copy(cargando = true, error = null) }
 
-            _estado.value = _estado.value.copy(
-                cargando = true,
-                error = null
-            )
-
-            val resultado = repository.obtenerEntregas()
-
-            resultado.onSuccess { entregas ->
-
-                _estado.value = DeliveryUiState(
-                    entregas = entregas,
-                    cargando = false
-                )
-
-            }.onFailure { error ->
-
-                _estado.value = _estado.value.copy(
-                    cargando = false,
-                    error = error.message ?: "Error desconocido"
-                )
-            }
+            repository.obtenerEntregas()
+                .onSuccess { lista ->
+                    _estado.update { it.copy(entregas = lista, cargando = false) }
+                }
+                .onFailure { e ->
+                    _estado.update {
+                        it.copy(cargando = false, error = e.message ?: "Error desconocido")
+                    }
+                }
         }
     }
 
-    fun actualizarEstado(id: Int, nuevoEstado: String) {
+    fun limpiarErrorAccion() {
+        _estado.update { it.copy(errorAccion = null) }
+    }
 
+    // Cambia entre "pendiente" y "en_camino"
+    fun actualizarEstado(id: Int, nuevoEstado: String, onExito: () -> Unit) {
         viewModelScope.launch {
+            _estado.update { it.copy(guardando = true, errorAccion = null) }
 
-            _estado.value = _estado.value.copy(
-                cargando = true,
-                error = null,
-                mensaje = null
-            )
+            repository.actualizarEstado(id, nuevoEstado)
+                .onSuccess { entregaActualizada ->
+                    // Reemplaza la entrega en la lista con la que regresó la API
+                    _estado.update { s ->
+                        s.copy(
+                            guardando = false,
+                            entregas = s.entregas.map {
+                                if (it.id == entregaActualizada.id) entregaActualizada else it
+                            }
+                        )
+                    }
+                    onExito()
+                }
+                .onFailure { e ->
+                    _estado.update { it.copy(guardando = false, errorAccion = e.message) }
+                }
+        }
+    }
 
-            val resultado = repository.actualizarEstado(
-                id,
-                nuevoEstado
-            )
+    // Registra la incidencia y cierra la entrega
+    fun registrarIncidencia(id: Int, motivo: String, onExito: () -> Unit) {
+        viewModelScope.launch {
+            _estado.update { it.copy(guardando = true, errorAccion = null) }
 
-            resultado.onSuccess { mensaje ->
-
-                _estado.value = _estado.value.copy(
-                    cargando = false,
-                    mensaje = mensaje
-                )
-
-                cargarEntregas()
-
-            }.onFailure { error ->
-
-                _estado.value = _estado.value.copy(
-                    cargando = false,
-                    error = error.message
-                )
-            }
+            repository.registrarIncidencia(id, motivo)
+                .onSuccess { entregaCerrada ->
+                    _estado.update { s ->
+                        s.copy(
+                            guardando = false,
+                            ultimaIncidencia = entregaCerrada,
+                            motivoIncidencia = motivo,
+                            // Ya está cerrada: se quita de la lista
+                            entregas = s.entregas.filter { it.id != entregaCerrada.id }
+                        )
+                    }
+                    onExito()
+                }
+                .onFailure { e ->
+                    _estado.update { it.copy(guardando = false, errorAccion = e.message) }
+                }
         }
     }
 }

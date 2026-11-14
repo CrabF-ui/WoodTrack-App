@@ -64,11 +64,11 @@ class DeliveryRepository(
         }
     }
 
-    // ---------- ESTADO (se termina en la Parte 4) ----------
+    // ---------- ESTADO E INCIDENCIA ----------
     suspend fun actualizarEstado(
         id: Int,
         nuevoEstado: String
-    ): Result<String> {
+    ): Result<Delivery> {
 
         return try {
             val response = api.actualizarEstado(
@@ -77,7 +77,35 @@ class DeliveryRepository(
             )
 
             if (response.isSuccessful) {
-                Result.success("Estado actualizado correctamente")
+                val entrega = response.body()?.data
+                    ?: return Result.failure(Exception("El servidor no devolvió información"))
+                Result.success(entrega)
+            } else {
+                Result.failure(Exception(mensajeDeError(response)))
+            }
+
+        } catch (e: IOException) {
+            Result.failure(Exception("No se pudo conectar con el servidor. Revisa tu conexión."))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun registrarIncidencia(
+        id: Int,
+        motivo: String
+    ): Result<Delivery> {
+
+        return try {
+            val response = api.registrarIncidencia(
+                id,
+                mapOf("motivo" to motivo)
+            )
+
+            if (response.isSuccessful) {
+                val entrega = response.body()?.data
+                    ?: return Result.failure(Exception("El servidor no devolvió información"))
+                Result.success(entrega)
             } else {
                 Result.failure(Exception(mensajeDeError(response)))
             }
