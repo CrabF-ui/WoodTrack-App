@@ -13,6 +13,8 @@ import com.example.logistica.screens.*
 import com.example.logistica.viewmodel.DeliveryViewModel
 import com.example.logistica.viewmodel.LoginViewModel
 import com.example.logistica.viewmodel.appViewModelFactory
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun AppNavigation(
@@ -115,6 +117,9 @@ fun AppNavigation(
                 },
                 onIncident = {
                     navController.navigate("incidencia/$id")
+                },
+                        onDeliver = {
+                    navController.navigate("entregar/$id")
                 }
             )
         }
@@ -202,6 +207,43 @@ fun AppNavigation(
                 onHome = {
                     navController.navigate("entregas") {
                         popUpTo("entregas") { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // REGISTRAR ENTREGA CON EVIDENCIA
+        composable(
+            route = "entregar/{id}",
+            arguments = argumentoId
+        ) { backStackEntry ->
+
+            val id = backStackEntry.arguments?.getInt("id") ?: 0
+            val estado by deliveryViewModel.estado.collectAsStateWithLifecycle()
+            val entrega = estado.entregas.find { it.id == id }
+            val context = LocalContext.current
+
+            LaunchedEffect(Unit) {
+                deliveryViewModel.limpiarErrorAccion()
+                // Si Android cerró la app al abrir la cámara, recarga la lista
+                if (entrega == null) {
+                    deliveryViewModel.cargarEntregas()
+                }
+            }
+
+            DeliverScreen(
+                entrega = entrega,
+                guardando = estado.guardando,
+                error = estado.errorAccion,
+                onBack = {
+                    navController.popBackStack()
+                },
+                onSave = { receptor, fotos, firma, motivoSinFirma ->
+                    deliveryViewModel.entregar(id, receptor, fotos, firma, motivoSinFirma) {
+                        Toast.makeText(context, "Entrega registrada", Toast.LENGTH_LONG).show()
+                        navController.navigate("entregas") {
+                            popUpTo("entregas") { inclusive = true }
+                        }
                     }
                 }
             )

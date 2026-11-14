@@ -23,7 +23,8 @@ fun DeliveryDetailScreen(
     onBack: () -> Unit,
     onMap: (String) -> Unit,
     onUpdate: () -> Unit,
-    onIncident: () -> Unit
+    onIncident: () -> Unit,
+    onDeliver: () -> Unit
 ) {
 
     Column(
@@ -130,6 +131,16 @@ fun DeliveryDetailScreen(
 
         Spacer(Modifier.weight(1f))
 
+        // Solo se puede entregar si está "en camino"
+        if (entrega.estado == "en_camino") {
+            PrimaryButton(
+                "Registrar entrega",
+                Icons.Default.CheckCircle,
+                onDeliver
+            )
+
+            Spacer(Modifier.height(10.dp))
+        }
         PrimaryButton(
             "Abrir en Google Maps",
             Icons.Default.Navigation

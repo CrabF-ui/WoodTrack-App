@@ -8,6 +8,11 @@ import com.example.logistica.data.remote.TokenManager
 import org.json.JSONObject
 import retrofit2.Response
 import java.io.IOException
+import java.io.File
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 
 class DeliveryRepository(
     private val api: ApiService,
@@ -112,6 +117,64 @@ class DeliveryRepository(
 
         } catch (e: IOException) {
             Result.failure(Exception("No se pudo conectar con el servidor. Revisa tu conexión."))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // ---------- ENTREGAR CON EVIDENCIA ----------
+    suspend fun entregar(
+        id: Int,
+        receptorNombre: String,
+        fotos: List<File>,
+        firma: File?,
+        motivoSinFirma: String?
+    ): Result<Unit> {
+
+        return try {
+            val texto = "text/plain".toMediaType()
+
+            // Cada foto va con el nombre "fotos[]", como pide la API
+            val partesFotos = fotos.map { archivo ->
+                MultipartBody.Part.createFormData(
+                    "fotos[]",
+                    archivo.name,
+                    archivo.asRequestBody("image/jpeg".toMediaType())
+                )
+            }
+
+            val parteFirma = firma?.let { archivo ->
+                MultipartBody.Part.createFormData(
+                    "firma",
+                    archivo.name,
+                    archivo.asRequestBody("image/png".toMediaType())
+                )
+            }
+
+            val response = api.entregar(
+                id,
+                receptorNombre.toRequestBody(texto),
+                partesFotos,
+                parteFirma,
+                motivoSinFirma?.toRequestBody(texto)
+            )
+
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                val mensaje = mensajeDeError(response)
+
+                // Si un intento anterior sí llegó al servidor, la entrega ya quedó
+                // registrada. La guía dice tratarlo como éxito.
+                if (response.code() == 422 && mensaje.contains("ya fue cerrada")) {
+                    Result.success(Unit)
+                } else {
+                    Result.failure(Exception(mensaje))
+                }
+            }
+
+        } catch (e: IOException) {
+            Result.failure(Exception("No se pudo conectar con el servidor. Intenta de nuevo."))
         } catch (e: Exception) {
             Result.failure(e)
         }

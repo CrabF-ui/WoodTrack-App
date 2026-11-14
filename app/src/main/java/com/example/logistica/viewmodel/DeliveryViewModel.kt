@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.File
 
 data class DeliveryUiState(
     val entregas: List<Delivery> = emptyList(),
@@ -90,6 +91,38 @@ class DeliveryViewModel(
                             motivoIncidencia = motivo,
                             // Ya está cerrada: se quita de la lista
                             entregas = s.entregas.filter { it.id != entregaCerrada.id }
+                        )
+                    }
+                    onExito()
+                }
+                .onFailure { e ->
+                    _estado.update { it.copy(guardando = false, errorAccion = e.message) }
+                }
+        }
+    }
+
+    // Registra la entrega con fotos y firma (o motivo sin firma)
+    fun entregar(
+        id: Int,
+        receptorNombre: String,
+        fotos: List<File>,
+        firma: File?,
+        motivoSinFirma: String?,
+        onExito: () -> Unit
+    ) {
+        viewModelScope.launch {
+            _estado.update { it.copy(guardando = true, errorAccion = null) }
+
+            repository.entregar(id, receptorNombre, fotos, firma, motivoSinFirma)
+                .onSuccess {
+                    // Borra las fotos temporales del celular
+                    (fotos + listOfNotNull(firma)).forEach { it.delete() }
+
+                    _estado.update { s ->
+                        s.copy(
+                            guardando = false,
+                            // Ya está entregada: se quita de la lista
+                            entregas = s.entregas.filter { it.id != id }
                         )
                     }
                     onExito()

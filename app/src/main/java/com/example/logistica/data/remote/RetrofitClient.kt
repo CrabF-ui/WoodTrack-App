@@ -4,7 +4,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-
+import java.util.concurrent.TimeUnit
 object RetrofitClient {
 
     // Dirección local de ejemplo.
@@ -40,6 +40,9 @@ object RetrofitClient {
                 chain.proceed(solicitudNueva)
             }
             .addInterceptor(logging)
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
             .build()
 
         return Retrofit.Builder()
