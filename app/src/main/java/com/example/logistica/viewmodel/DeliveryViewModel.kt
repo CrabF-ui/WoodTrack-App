@@ -25,6 +25,8 @@ class DeliveryViewModel(
 
     val estado: StateFlow<DeliveryUiState> = _estado
 
+    fun nombreUsuario(): String? = repository.nombreUsuario()
+
     fun cargarEntregas() {
 
         viewModelScope.launch {

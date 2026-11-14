@@ -12,58 +12,32 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontWeight
 import com.example.logistica.components.*
+import com.example.logistica.data.model.Delivery
 import com.example.logistica.ui.theme.*
 
-data class Entrega(
-    val id: Int,
-    val pedido: String,
-    val cliente: String,
-    val direccion: String,
-    val producto: String,
-    val distancia: String,
-    val estado: String
-)
-
-val entregasEjemplo = listOf(
-    Entrega(
-        1,
-        "PED-4821",
-        "María González",
-        "Av. Las Torres 184, Col. Centro",
-        "Credenza nogal 180 cm",
-        "1.2 km",
-        "Pendiente"
-    ),
-    Entrega(
-        2,
-        "PED-4822",
-        "Constructora Roble",
-        "Calle Fresno 28, Parque Industrial",
-        "Mesa de comedor",
-        "3.8 km",
-        "En camino"
-    ),
-    Entrega(
-        3,
-        "PED-4823",
-        "Javier Soto",
-        "Priv. del Lago 16, Jardines",
-        "Puerta de madera",
-        "6.1 km",
-        "Pendiente"
-    )
-)
+// Convierte el estado de la API al texto que ve el chofer
+fun textoEstado(estado: String): String = when (estado) {
+    "pendiente" -> "Pendiente"
+    "en_camino" -> "En camino"
+    "entregada" -> "Entregada"
+    "incidencia" -> "Incidencia"
+    else -> estado
+}
 
 @Composable
 fun DeliveriesScreen(
+    nombre: String?,
+    entregas: List<Delivery>,
+    cargando: Boolean,
+    error: String?,
+    onSincronizar: () -> Unit,
     onOpen: (Int) -> Unit,
     onLogout: () -> Unit
 ) {
-    var sincronizando by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -78,19 +52,17 @@ fun DeliveriesScreen(
                 .padding(18.dp)
         ) {
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(
-                        "Buenos días, Carlos",
+                        if (nombre.isNullOrBlank()) "Hola" else "Hola, $nombre",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Texto
                     )
 
                     Text(
-                        "Martes 26 · 4 entregas asignadas",
+                        "${entregas.size} entregas pendientes",
                         fontSize = 11.sp,
                         color = TextoSecundario
                     )
@@ -107,71 +79,76 @@ fun DeliveriesScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            InfoBanner(
-                "Trabajando sin conexión",
-                "Tus cambios se guardarán en este equipo"
-            )
-
-            Spacer(Modifier.height(17.dp))
+            if (error != null) {
+                InfoBanner(
+                    "No se pudieron cargar las entregas",
+                    error,
+                    colorFondo = FondoNaranja,
+                    colorTexto = Naranja
+                )
+                Spacer(Modifier.height(12.dp))
+            }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "Ruta sugerida",
+                    "Ruta del día",
                     fontWeight = FontWeight.SemiBold,
                     color = Texto
                 )
 
                 Spacer(Modifier.weight(1f))
 
-                Text(
-                    "1 de 4 completadas",
-                    color = Verde,
-                    fontSize = 11.sp
-                )
+                if (cargando) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = Cafe
+                    )
+                }
             }
 
             Spacer(Modifier.height(12.dp))
 
+            if (!cargando && error == null && entregas.isEmpty()) {
+                Text(
+                    "No tienes entregas pendientes. Toca Sincronizar para revisar de nuevo.",
+                    color = TextoSecundario,
+                    fontSize = 13.sp
+                )
+            }
+
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(entregasEjemplo) { entrega ->
+                items(entregas, key = { it.id }) { entrega ->
 
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable {
-                                onOpen(entrega.id)
-                            },
+                            .clickable { onOpen(entrega.id) },
                         shape = RoundedCornerShape(17.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Blanco
-                        ),
+                        colors = CardDefaults.cardColors(containerColor = Blanco),
                         elevation = CardDefaults.cardElevation(2.dp)
                     ) {
 
-                        Column(
-                            modifier = Modifier.padding(14.dp)
-                        ) {
+                        Column(modifier = Modifier.padding(14.dp)) {
 
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    entrega.pedido,
+                                    "Pedido #${entrega.pedido.id}",
                                     color = TextoSecundario,
                                     fontSize = 10.sp
                                 )
 
                                 Spacer(Modifier.weight(1f))
 
-                                StatusLabel(entrega.estado)
+                                StatusLabel(textoEstado(entrega.estado))
                             }
 
                             Spacer(Modifier.height(7.dp))
 
                             Text(
-                                entrega.cliente,
+                                entrega.pedido.cliente,
                                 color = Texto,
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 15.sp
@@ -191,7 +168,7 @@ fun DeliveriesScreen(
                                 Spacer(Modifier.width(4.dp))
 
                                 Text(
-                                    entrega.direccion,
+                                    entrega.pedido.direccion,
                                     color = TextoSecundario,
                                     fontSize = 10.sp,
                                     maxLines = 1
@@ -200,23 +177,23 @@ fun DeliveriesScreen(
 
                             Spacer(Modifier.height(8.dp))
 
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
-                                    Icons.Default.Place,
+                                    Icons.Default.ShoppingCart,
                                     null,
                                     tint = Cafe,
                                     modifier = Modifier.size(14.dp)
                                 )
 
                                 Text(
-                                    " ${entrega.distancia} · siguiente sugerida",
+                                    " " + entrega.pedido.productos.joinToString {
+                                        "${it.cantidad} × ${it.producto}"
+                                    },
                                     color = Cafe,
-                                    fontSize = 10.sp
+                                    fontSize = 10.sp,
+                                    maxLines = 1,
+                                    modifier = Modifier.weight(1f)
                                 )
-
-                                Spacer(Modifier.weight(1f))
 
                                 Text(
                                     "Ver detalle  ›",
@@ -231,19 +208,13 @@ fun DeliveriesScreen(
             }
         }
 
-        NavigationBar(
-            containerColor = Blanco
-        ) {
+        NavigationBar(containerColor = Blanco) {
 
             NavigationBarItem(
                 selected = true,
                 onClick = {},
-                icon = {
-                    Icon(Icons.Default.LocalShipping, null)
-                },
-                label = {
-                    Text("Entregas")
-                },
+                icon = { Icon(Icons.Default.LocalShipping, null) },
+                label = { Text("Entregas") },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = Cafe,
                     selectedTextColor = Cafe,
@@ -253,15 +224,9 @@ fun DeliveriesScreen(
 
             NavigationBarItem(
                 selected = false,
-                onClick = {
-                    sincronizando = true
-                },
-                icon = {
-                    Icon(Icons.Default.Sync, null)
-                },
-                label = {
-                    Text("Sincronizar")
-                },
+                onClick = onSincronizar,
+                icon = { Icon(Icons.Default.Sync, null) },
+                label = { Text("Sincronizar") },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = Cafe
                 )

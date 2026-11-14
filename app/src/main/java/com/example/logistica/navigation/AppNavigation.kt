@@ -12,6 +12,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.logistica.data.repository.DeliveryRepository
 import com.example.logistica.viewmodel.LoginViewModel
 import com.example.logistica.viewmodel.appViewModelFactory
+import com.example.logistica.viewmodel.DeliveryViewModel
 
 import com.example.logistica.screens.*
 
@@ -24,6 +25,7 @@ fun AppNavigation(
 
     val navController = rememberNavController()
     val factory = remember(repository) { appViewModelFactory(repository) }
+    val deliveryViewModel: DeliveryViewModel = viewModel(factory = factory)
 
     var estadoPedido by remember {
         mutableStateOf("Pendiente")
@@ -67,7 +69,20 @@ fun AppNavigation(
 
         // LISTADO DE ENTREGAS
         composable("entregas") {
+            val estado by deliveryViewModel.estado.collectAsStateWithLifecycle()
+
+            LaunchedEffect(Unit) {
+                deliveryViewModel.cargarEntregas()
+            }
+
             DeliveriesScreen(
+                nombre = deliveryViewModel.nombreUsuario(),
+                entregas = estado.entregas,
+                cargando = estado.cargando,
+                error = estado.error,
+                onSincronizar = {
+                    deliveryViewModel.cargarEntregas()
+                },
                 onOpen = { id ->
                     navController.navigate("detalle/$id")
                 },

@@ -19,9 +19,20 @@ class TokenManager(context: Context) {
         return preferences.getString("auth_token", null)
     }
 
+    fun guardarNombre(nombre: String) {
+        preferences.edit()
+            .putString("user_name", nombre)
+            .apply()
+    }
+
+    fun obtenerNombre(): String? {
+        return preferences.getString("user_name", null)
+    }
+
     fun eliminarToken() {
         preferences.edit()
             .remove("auth_token")
+            .remove("user_name")
             .apply()
     }
 }
