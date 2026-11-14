@@ -1,15 +1,14 @@
 package com.example.logistica.data.model
 
 data class LoginResponse(
-    val success: Boolean,
-    val message: String?,
     val token: String,
+    val token_type: String,
+    val expires_at: String,
     val user: User
 )
 
 data class User(
     val id: Int,
-    val nombre: String?,
-    val email: String?,
-    val rol: String?
+    val name: String,
+    val email: String
 )

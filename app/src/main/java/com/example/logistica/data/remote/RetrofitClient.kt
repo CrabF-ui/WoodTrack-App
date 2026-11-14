@@ -4,7 +4,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-
+import java.util.concurrent.TimeUnit
 object RetrofitClient {
 
     // Dirección local de ejemplo.
@@ -37,9 +37,23 @@ object RetrofitClient {
                     .addHeader("Accept", "application/json")
                     .build()
 
-                chain.proceed(solicitudNueva)
+                val respuesta = chain.proceed(solicitudNueva)
+
+                // 401 = token vencido o inválido → regresar al login
+                // (en el login un 401 no aplica, ahí los errores son 422)
+                if (respuesta.code == 401 &&
+                    !solicitudOriginal.url.encodedPath.endsWith("/login")
+                ) {
+                    tokenManager.eliminarToken()
+                    SesionEvents.notificarExpirada()
+                }
+
+                respuesta
             }
             .addInterceptor(logging)
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
             .build()
 
         return Retrofit.Builder()

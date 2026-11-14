@@ -20,11 +20,12 @@ import androidx.compose.ui.graphics.Color
 
 @Composable
 fun LoginScreen(
-    onLogin: () -> Unit
+    cargando: Boolean,
+    mensajeError: String?,
+    onLogin: (String, String) -> Unit
 ) {
-    var usuario by remember { mutableStateOf("carlos.ramirez") }
-    var password by remember { mutableStateOf("123456") }
-    var error by remember { mutableStateOf(false) }
+    var usuario by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -34,7 +35,7 @@ fun LoginScreen(
             .padding(20.dp)
     ) {
 
-        Spacer(Modifier.height(25.dp))
+        Spacer(Modifier.height(12.dp))
 
         Row(verticalAlignment = Alignment.CenterVertically) {
 
@@ -69,12 +70,12 @@ fun LoginScreen(
             }
         }
 
-        Spacer(Modifier.height(35.dp))
+        Spacer(Modifier.height(20.dp))
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(140.dp)
+                .height(100.dp)
                 .background(
                     Color(0xFFE8D9C5),
                     RoundedCornerShape(18.dp)
@@ -115,7 +116,7 @@ fun LoginScreen(
             value = usuario,
             onValueChange = {
                 usuario = it
-                error = false
+
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -141,7 +142,6 @@ fun LoginScreen(
             value = password,
             onValueChange = {
                 password = it
-                error = false
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -160,32 +160,22 @@ fun LoginScreen(
             )
         )
 
-        if (error) {
+        if (mensajeError != null) {
             Text(
-                "Completa todos los campos.",
+                mensajeError,
                 color = Rojo,
-                fontSize = 12.sp
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 6.dp)
             )
         }
 
         Spacer(Modifier.height(18.dp))
 
-        PrimaryButton("Ingresar") {
-
-            if (usuario.isNotBlank() && password.isNotBlank()) {
-                onLogin()
-            } else {
-                error = true
+        PrimaryButton(if (cargando) "Ingresando..." else "Ingresar") {
+            if (!cargando) {
+                onLogin(usuario, password)
             }
         }
-
-        Spacer(Modifier.height(15.dp))
-
-        Text(
-            "¿No puedes ingresar? Habla con tu supervisor.",
-            color = TextoSecundario,
-            fontSize = 11.sp,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
     }
+
 }
