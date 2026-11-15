@@ -260,9 +260,9 @@ fun AppNavigation(
                 },
                 onSave = { receptor, fotos, firma, motivoSinFirma ->
                     deliveryViewModel.entregar(id, receptor, fotos, firma, motivoSinFirma) {
-                        Toast.makeText(context, "Entrega registrada", Toast.LENGTH_LONG).show()
-                        navController.navigate("entregas") {
-                            popUpTo("entregas") { inclusive = true }
+                        navController.navigate("entregaRegistrada") {
+                            // Quita detalle y evidencia: "atrás" ya no regresa a las fotos
+                            popUpTo("entregas")
                         }
                     }
                 }
@@ -280,7 +280,25 @@ fun AppNavigation(
             )
         }
 
+        // ENTREGA REGISTRADA
+        composable("entregaRegistrada") {
+            val estado by deliveryViewModel.estado.collectAsStateWithLifecycle()
+            val entrega = estado.ultimaEntrega
+
+            DeliverySavedScreen(
+                pedido = if (entrega != null) "Pedido #${entrega.pedido.id}" else "",
+                receptor = estado.receptorUltimaEntrega ?: "",
+                hora = estado.horaUltimaEntrega ?: "--:--",
+                onHome = {
+                    navController.navigate("entregas") {
+                        popUpTo("entregas") { inclusive = true }
+                    }
+                }
+            )
+        }
+
     }
+
 
     // Token vencido (401) en cualquier pantalla → regresar al login
     val contexto = LocalContext.current
