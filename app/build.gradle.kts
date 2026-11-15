@@ -41,6 +41,8 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.8.5")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     debugImplementation("androidx.compose.ui:ui-tooling")
+    // WorkManager: revisar entregas nuevas en segundo plano
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
 
     // Retrofit: conexión con la API REST
     implementation("com.squareup.retrofit2:retrofit:3.0.0")

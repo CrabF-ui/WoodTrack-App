@@ -57,7 +57,12 @@ class DeliveryRepository(
             val response = api.obtenerEntregas()
 
             if (response.isSuccessful) {
-                Result.success(response.body()?.data ?: emptyList())
+                val lista = response.body()?.data ?: emptyList()
+
+                // Estas entregas ya se vieron: no hay que notificarlas
+                tokenManager.guardarIdsVistos(lista.map { it.id }.toSet())
+
+                Result.success(lista)
             } else {
                 Result.failure(Exception(mensajeDeError(response)))
             }

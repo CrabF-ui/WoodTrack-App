@@ -16,6 +16,8 @@ import com.example.logistica.viewmodel.appViewModelFactory
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 import com.example.logistica.data.remote.SesionEvents
+import com.example.logistica.notificaciones.NotificationHelper
+import com.example.logistica.notificaciones.NuevasEntregasWorker
 
 @Composable
 fun AppNavigation(
@@ -66,9 +68,18 @@ fun AppNavigation(
         // LISTADO DE ENTREGAS
         composable("entregas") {
             val estado by deliveryViewModel.estado.collectAsStateWithLifecycle()
+            val context = LocalContext.current
 
             LaunchedEffect(Unit) {
                 deliveryViewModel.cargarEntregas()
+
+                // Revisar entregas nuevas en segundo plano (notificaciones)
+                NuevasEntregasWorker.programar(context)
+
+                // Si había una notificación de entregas, ya se vio
+                NotificationHelper(context).cancelNotification(
+                    NotificationHelper.NOTIFICATION_ENTREGAS_ID
+                )
             }
 
             DeliveriesScreen(
@@ -83,6 +94,9 @@ fun AppNavigation(
                     navController.navigate("detalle/$id")
                 },
                 onLogout = {
+                    // Ya no revisar entregas de este chofer
+                    NuevasEntregasWorker.cancelar(context)
+
                     deliveryViewModel.cerrarSesion {
                         navController.navigate("login") {
                             popUpTo(navController.graph.id) { inclusive = true }
