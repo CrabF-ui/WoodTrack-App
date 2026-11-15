@@ -6,7 +6,7 @@
 
     <application
         android:allowBackup="true"
-        android:label="Logistica"
+        android:label="WoodTrack"
         android:supportsRtl="true"
         android:usesCleartextTraffic="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
