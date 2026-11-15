@@ -9,6 +9,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 data class DeliveryUiState(
     val entregas: List<Delivery> = emptyList(),
@@ -21,7 +24,12 @@ data class DeliveryUiState(
 
     // Para la pantalla de "incidencia registrada"
     val ultimaIncidencia: Delivery? = null,
-    val motivoIncidencia: String? = null
+    val motivoIncidencia: String? = null,
+
+    // Para la pantalla de "entrega registrada"
+    val ultimaEntrega: Delivery? = null,
+    val receptorUltimaEntrega: String? = null,
+    val horaUltimaEntrega: String? = null
 )
 
 class DeliveryViewModel(
@@ -114,13 +122,26 @@ class DeliveryViewModel(
             _estado.update { it.copy(guardando = true, errorAccion = null) }
 
             repository.entregar(id, receptorNombre, fotos, firma, motivoSinFirma)
-                .onSuccess {
+                .onSuccess { entregaApi ->
                     // Borra las fotos temporales del celular
                     (fotos + listOfNotNull(firma)).forEach { it.delete() }
 
                     _estado.update { s ->
+                        // Si la API no mandó la entrega (reintento "ya fue cerrada"),
+                        // se usan los datos que ya estaban en la lista
+                        val registrada = entregaApi ?: s.entregas.find { it.id == id }
+
+                        // Hora real de la API; si no viene, la del celular
+                        val hora = entregaApi?.estado_fecha_hora
+                            ?.takeIf { it.length >= 16 }
+                            ?.substring(11, 16)
+                            ?: SimpleDateFormat("HH:mm", Locale("es", "MX")).format(Date())
+
                         s.copy(
                             guardando = false,
+                            ultimaEntrega = registrada,
+                            receptorUltimaEntrega = receptorNombre,
+                            horaUltimaEntrega = hora,
                             // Ya está entregada: se quita de la lista
                             entregas = s.entregas.filter { it.id != id }
                         )
@@ -133,6 +154,7 @@ class DeliveryViewModel(
         }
     }
 
+    // Cierra sesión: avisa a la API, borra el token y limpia los datos
     fun cerrarSesion(onListo: () -> Unit) {
         viewModelScope.launch {
             repository.cerrarSesion()

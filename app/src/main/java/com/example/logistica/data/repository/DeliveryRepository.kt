@@ -134,7 +134,7 @@ class DeliveryRepository(
         fotos: List<File>,
         firma: File?,
         motivoSinFirma: String?
-    ): Result<Unit> {
+    ): Result<Delivery?> {
 
         return try {
             val texto = "text/plain".toMediaType()
@@ -165,14 +165,16 @@ class DeliveryRepository(
             )
 
             if (response.isSuccessful) {
-                Result.success(Unit)
+                // La API regresa la entrega ya como "entregada"
+                Result.success(response.body()?.data)
             } else {
                 val mensaje = mensajeDeError(response)
 
                 // Si un intento anterior sí llegó al servidor, la entrega ya quedó
                 // registrada. La guía dice tratarlo como éxito.
                 if (response.code() == 422 && mensaje.contains("ya fue cerrada")) {
-                    Result.success(Unit)
+                    // Un intento anterior sí llegó; la API no manda la entrega
+                    Result.success(null)
                 } else {
                     Result.failure(Exception(mensaje))
                 }
