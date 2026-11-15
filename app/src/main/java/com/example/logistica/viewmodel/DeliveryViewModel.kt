@@ -12,6 +12,7 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.example.logistica.util.Fechas
 
 data class DeliveryUiState(
     val entregas: List<Delivery> = emptyList(),
@@ -154,12 +155,52 @@ class DeliveryViewModel(
         }
     }
 
+    // ---------- FINALIZADAS (solo lectura) ----------
+
+    private val _finalizadas = MutableStateFlow(FinalizadasUiState())
+    val finalizadas: StateFlow<FinalizadasUiState> = _finalizadas
+
+    fun cargarFinalizadas() {
+        viewModelScope.launch {
+            _finalizadas.update { it.copy(cargando = true, error = null) }
+
+            repository.obtenerFinalizadas()
+                .onSuccess { lista ->
+                    _finalizadas.update { it.copy(todas = lista, cargando = false) }
+                }
+                .onFailure { e ->
+                    _finalizadas.update {
+                        it.copy(cargando = false, error = e.message ?: "Error desconocido")
+                    }
+                }
+        }
+    }
+
+    fun elegirPeriodo(periodo: Periodo) {
+        _finalizadas.update { it.copy(periodo = periodo) }
+    }
+
+    // Recibe lo que regresa el calendario (00:00 UTC del día elegido)
+    fun elegirFecha(utcMilis: Long) {
+        _finalizadas.update {
+            it.copy(
+                periodo = Periodo.FECHA,
+                fechaElegida = Fechas.diaDesdeDatePicker(utcMilis)
+            )
+        }
+    }
+
+    fun elegirTipo(tipo: TipoFinalizada) {
+        _finalizadas.update { it.copy(tipo = tipo) }
+    }
+
     // Cierra sesión: avisa a la API, borra el token y limpia los datos
     fun cerrarSesion(onListo: () -> Unit) {
         viewModelScope.launch {
             repository.cerrarSesion()
-            // Limpia las entregas del chofer anterior
+            // Limpia los datos del chofer anterior
             _estado.value = DeliveryUiState()
+            _finalizadas.value = FinalizadasUiState()
             onListo()
         }
     }

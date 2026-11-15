@@ -74,6 +74,33 @@ class DeliveryRepository(
         }
     }
 
+    // ---------- FINALIZADAS (solo lectura) ----------
+    // Entregadas + con incidencia. No toca los IDs vistos de las notificaciones (WOOD-68).
+    suspend fun obtenerFinalizadas(): Result<List<Delivery>> {
+
+        return try {
+            val entregadas = api.obtenerEntregas(estado = "entregada")
+            if (!entregadas.isSuccessful) {
+                return Result.failure(Exception(mensajeDeError(entregadas)))
+            }
+
+            val incidencias = api.obtenerEntregas(estado = "incidencia")
+            if (!incidencias.isSuccessful) {
+                return Result.failure(Exception(mensajeDeError(incidencias)))
+            }
+
+            Result.success(
+                (entregadas.body()?.data ?: emptyList()) +
+                        (incidencias.body()?.data ?: emptyList())
+            )
+
+        } catch (e: IOException) {
+            Result.failure(Exception("No se pudo conectar con el servidor. Revisa tu conexión."))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     // ---------- ESTADO E INCIDENCIA ----------
     suspend fun actualizarEstado(
         id: Int,

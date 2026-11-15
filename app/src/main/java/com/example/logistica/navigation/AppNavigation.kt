@@ -90,6 +90,11 @@ fun AppNavigation(
                 onSincronizar = {
                     deliveryViewModel.cargarEntregas()
                 },
+                onFinalizadas = {
+                    navController.navigate("finalizadas") {
+                        launchSingleTop = true
+                    }
+                },
                 onOpen = { id ->
                     navController.navigate("detalle/$id")
                 },
@@ -293,6 +298,28 @@ fun AppNavigation(
                     navController.navigate("entregas") {
                         popUpTo("entregas") { inclusive = true }
                     }
+                }
+            )
+        }
+
+
+        // FINALIZADAS (solo lectura)
+        composable("finalizadas") {
+            val finalizadas by deliveryViewModel.finalizadas.collectAsStateWithLifecycle()
+
+            // Al entrar se recarga, para que aparezca la entrega recién registrada
+            LaunchedEffect(Unit) {
+                deliveryViewModel.cargarFinalizadas()
+            }
+
+            FinishedDeliveriesScreen(
+                estado = finalizadas,
+                onPeriodo = { deliveryViewModel.elegirPeriodo(it) },
+                onFecha = { deliveryViewModel.elegirFecha(it) },
+                onTipo = { deliveryViewModel.elegirTipo(it) },
+                onReintentar = { deliveryViewModel.cargarFinalizadas() },
+                onEntregas = {
+                    navController.popBackStack("entregas", inclusive = false)
                 }
             )
         }

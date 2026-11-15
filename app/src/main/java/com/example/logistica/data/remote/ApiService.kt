@@ -14,6 +14,7 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.http.Multipart
 import retrofit2.http.Part
+import retrofit2.http.Query
 
 interface ApiService {
 
@@ -28,8 +29,12 @@ interface ApiService {
     suspend fun cerrarSesion(): Response<Unit>
 
     // Entregas pendientes y en camino del chofer
+    // Sin estado: pendientes y en camino (como antes).
+    // Con estado: solo ese ("entregada", "incidencia"…)
     @GET("entregas")
-    suspend fun obtenerEntregas(): Response<EntregasResponse>
+    suspend fun obtenerEntregas(
+        @Query("estado") estado: String? = null
+    ): Response<EntregasResponse>
 
     // Cambiar entre pendiente y en_camino
     @PATCH("entregas/{id}/estado")
