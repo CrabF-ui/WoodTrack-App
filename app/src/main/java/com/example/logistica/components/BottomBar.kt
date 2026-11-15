@@ -1,63 +1,75 @@
 package com.example.logistica.components
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LocalShipping
-import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.outlined.LocalShipping
+import androidx.compose.material.icons.outlined.Sync
+import androidx.compose.material.icons.outlined.TaskAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import com.example.logistica.ui.theme.*
 
+// Barra inferior: Entregas · Finalizadas · Sincronizar
+// seleccionado: 0 = Entregas, 1 = Finalizadas
 @Composable
 fun BottomBar(
     seleccionado: Int,
-    onSeleccionar: (Int) -> Unit
+    onEntregas: () -> Unit,
+    onFinalizadas: () -> Unit,
+    onSincronizar: () -> Unit
 ) {
-    NavigationBar(
-        containerColor = Blanco,
-        contentColor = Cafe
-    ) {
+    val colores = NavigationBarItemDefaults.colors(
+        selectedIconColor = CafeOscuro,
+        selectedTextColor = CafeOscuro,
+        indicatorColor = CafeClaro,
+        unselectedIconColor = TextoSecundario,
+        unselectedTextColor = TextoSecundario
+    )
 
-        NavigationBarItem(
-            selected = seleccionado == 0,
-            onClick = {
-                onSeleccionar(0)
-            },
-            icon = {
-                Icon(
-                    Icons.Default.LocalShipping,
-                    contentDescription = "Entregas"
-                )
-            },
-            label = {
-                Text("Entregas")
-            },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = Cafe,
-                selectedTextColor = Cafe,
-                indicatorColor = Fondo
-            )
-        )
+    Column {
+        HorizontalDivider(color = Borde)
 
-        NavigationBarItem(
-            selected = seleccionado == 1,
-            onClick = {
-                onSeleccionar(1)
-            },
-            icon = {
-                Icon(
-                    Icons.Default.Sync,
-                    contentDescription = "Sincronizar"
-                )
-            },
-            label = {
-                Text("Sincronizar")
-            },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = Cafe,
-                selectedTextColor = Cafe,
-                indicatorColor = Fondo
+        NavigationBar(
+            containerColor = Blanco,
+            tonalElevation = 0.dp
+        ) {
+
+            NavigationBarItem(
+                selected = seleccionado == 0,
+                onClick = onEntregas,
+                icon = { Icon(Icons.Outlined.LocalShipping, contentDescription = null) },
+                label = {
+                    Text(
+                        "Entregas",
+                        fontWeight = if (seleccionado == 0) FontWeight.SemiBold else FontWeight.Normal
+                    )
+                },
+                colors = colores
             )
-        )
+
+            NavigationBarItem(
+                selected = seleccionado == 1,
+                onClick = onFinalizadas,
+                icon = { Icon(Icons.Outlined.TaskAlt, contentDescription = null) },
+                label = {
+                    Text(
+                        "Finalizadas",
+                        fontWeight = if (seleccionado == 1) FontWeight.SemiBold else FontWeight.Normal
+                    )
+                },
+                colors = colores
+            )
+
+            // No es una pantalla: recarga la pantalla actual
+            NavigationBarItem(
+                selected = false,
+                onClick = onSincronizar,
+                icon = { Icon(Icons.Outlined.Sync, contentDescription = null) },
+                label = { Text("Sincronizar") },
+                colors = colores
+            )
+        }
     }
 }

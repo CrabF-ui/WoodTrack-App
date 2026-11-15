@@ -1,19 +1,13 @@
 package com.example.logistica.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.Inventory2
-import androidx.compose.material.icons.outlined.LocalShipping
-import androidx.compose.material.icons.outlined.LocationOn
-import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material.icons.outlined.Warning
-import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -63,6 +57,7 @@ fun DeliveriesScreen(
     cargando: Boolean,
     error: String?,
     onSincronizar: () -> Unit,
+    onFinalizadas: () -> Unit,
     onOpen: (Int) -> Unit,
     onLogout: () -> Unit
 ) {
@@ -217,147 +212,22 @@ fun DeliveriesScreen(
                 contentPadding = PaddingValues(bottom = 14.dp)
             ) {
                 itemsIndexed(entregas, key = { _, entrega -> entrega.id }) { indice, entrega ->
-
-                    TarjetaWood(
-                        modifier = Modifier.clickable { onOpen(entrega.id) }
-                    ) {
-
-                        Column(modifier = Modifier.padding(14.dp)) {
-
-                            // Pedido + estado
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    "Pedido #${entrega.pedido.id}",
-                                    color = TextoSecundario,
-                                    fontSize = 12.sp
-                                )
-
-                                Spacer(Modifier.weight(1f))
-
-                                StatusLabel(textoEstado(entrega.estado))
-                            }
-
-                            // La primera de la lista es la siguiente según el orden de la API
-                            if (indice == 0) {
-                                Spacer(Modifier.height(6.dp))
-                                Surface(
-                                    color = FondoVerde,
-                                    shape = RoundedCornerShape(6.dp)
-                                ) {
-                                    Text(
-                                        "Siguiente entrega",
-                                        color = Verde,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                                    )
-                                }
-                            }
-
-                            Spacer(Modifier.height(6.dp))
-
-                            // Cliente
-                            Text(
-                                entrega.pedido.cliente,
-                                color = Texto,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 17.sp
-                            )
-
-                            // Dirección
-                            Row(
-                                modifier = Modifier.padding(top = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    Icons.Outlined.LocationOn,
-                                    null,
-                                    tint = TextoSecundario,
-                                    modifier = Modifier.size(16.dp)
-                                )
-
-                                Spacer(Modifier.width(4.dp))
-
-                                Text(
-                                    entrega.pedido.direccion,
-                                    color = TextoSecundario,
-                                    fontSize = 12.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-
-                            HorizontalDivider(
-                                modifier = Modifier.padding(vertical = 12.dp),
-                                color = Borde
-                            )
-
-                            // Productos + ver detalle
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    Icons.Outlined.ShoppingCart,
-                                    null,
-                                    tint = Cafe,
-                                    modifier = Modifier.size(16.dp)
-                                )
-
-                                Spacer(Modifier.width(6.dp))
-
-                                Text(
-                                    entrega.pedido.productos.joinToString {
-                                        "${it.cantidad} × ${it.producto}"
-                                    },
-                                    color = Texto,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.weight(1f)
-                                )
-
-                                Text(
-                                    "Ver detalle  ›",
-                                    color = Verde,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-                    }
+                    TarjetaEntrega(
+                        entrega = entrega,
+                        // La primera de la lista es la siguiente según el orden de la API
+                        siguiente = indice == 0,
+                        onClick = { onOpen(entrega.id) }
+                    )
                 }
             }
         }
 
         // ---------- BARRA DE ABAJO ----------
-        HorizontalDivider(color = Borde)
-
-        NavigationBar(
-            containerColor = Blanco,
-            tonalElevation = 0.dp
-        ) {
-
-            NavigationBarItem(
-                selected = true,
-                onClick = {},
-                icon = { Icon(Icons.Outlined.LocalShipping, null) },
-                label = { Text("Entregas", fontWeight = FontWeight.SemiBold) },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = CafeOscuro,
-                    selectedTextColor = CafeOscuro,
-                    indicatorColor = Blanco
-                )
-            )
-
-            NavigationBarItem(
-                selected = false,
-                onClick = onSincronizar,
-                icon = { Icon(Icons.Outlined.Sync, null) },
-                label = { Text("Sincronizar") },
-                colors = NavigationBarItemDefaults.colors(
-                    unselectedIconColor = TextoSecundario,
-                    unselectedTextColor = TextoSecundario
-                )
-            )
-        }
+        BottomBar(
+            seleccionado = 0,
+            onEntregas = {},
+            onFinalizadas = onFinalizadas,
+            onSincronizar = onSincronizar
+        )
     }
 }
