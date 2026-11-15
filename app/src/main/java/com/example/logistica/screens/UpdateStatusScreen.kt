@@ -1,18 +1,22 @@
 package com.example.logistica.screens
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.LocalShipping
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.logistica.components.*
@@ -31,7 +35,7 @@ fun UpdateStatusScreen(
 
     // La API solo permite cambiar entre estos dos
     val opciones = listOf(
-        Triple("pendiente", "Pendiente", "Aún no inicia la ruta"),
+        Triple("pendiente", "Pendiente", "Aún no inicias la ruta"),
         Triple("en_camino", "En camino", "Vas hacia el domicilio")
     )
 
@@ -45,106 +49,166 @@ fun UpdateStatusScreen(
             .background(Fondo)
             .statusBarsPadding()
             .navigationBarsPadding()
-            .imePadding()
-            .verticalScroll(rememberScrollState())
-            .padding(20.dp)
     ) {
 
         if (entrega == null) {
-            ScreenHeader("Actualizar estado", "", onBack)
-            Text(
-                "No se encontró la entrega. Regresa y toca Sincronizar.",
-                color = TextoSecundario,
-                fontSize = 13.sp
-            )
+            Column(Modifier.padding(18.dp)) {
+                ScreenHeader("Actualizar estado", "", onBack)
+                Text(
+                    "No se encontró la entrega. Regresa y toca Sincronizar.",
+                    color = TextoSecundario,
+                    fontSize = 13.sp
+                )
+            }
             return@Column
         }
 
-        ScreenHeader(
-            "Actualizar estado",
-            "Pedido #${entrega.pedido.id} · ${entrega.pedido.cliente}",
-            onBack
-        )
+        // ---------- PARTE DE ARRIBA: opciones con scroll ----------
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(start = 18.dp, end = 18.dp, top = 14.dp)
+        ) {
 
-        Text(
-            "¿Cuál es el estado actual?",
-            color = Texto,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold
-        )
+            ScreenHeader(
+                "Actualizar estado",
+                "Pedido #${entrega.pedido.id} · ${entrega.pedido.cliente}",
+                onBack
+            )
 
-        Text(
-            "Para marcarla como entregada, regresa al detalle y registra la entrega con fotos.",
-            color = TextoSecundario,
-            fontSize = 11.sp
-        )
+            Text(
+                "¿Cuál es el estado actual?",
+                color = Texto,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
+            )
 
-        Spacer(Modifier.height(18.dp))
+            Text(
+                "Actualiza el estado para informar al equipo de planta.",
+                color = TextoSecundario,
+                fontSize = 13.sp
+            )
 
-        opciones.forEach { (valor, titulo, descripcion) ->
+            Spacer(Modifier.height(16.dp))
 
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 9.dp),
-                shape = RoundedCornerShape(13.dp),
-                colors = CardDefaults.cardColors(containerColor = Blanco),
-                border = if (estado == valor) BorderStroke(1.5.dp, Cafe) else null
-            ) {
+            // Pendiente / En camino
+            opciones.forEach { (valor, titulo, descripcion) ->
 
-                Row(
+                val seleccionada = estado == valor
+
+                TarjetaWood(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp),
+                        .padding(bottom = 10.dp)
+                        .clickable { estado = valor },
+                    seleccionada = seleccionada
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconoCuadro(
+                            if (valor == "pendiente") Icons.Outlined.Schedule
+                            else Icons.Outlined.LocalShipping
+                        )
+
+                        Spacer(Modifier.width(12.dp))
+
+                        Column(Modifier.weight(1f)) {
+                            Text(titulo, color = Texto, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                            Text(descripcion, color = TextoSecundario, fontSize = 12.sp)
+                        }
+
+                        RadioButton(
+                            selected = seleccionada,
+                            onClick = { estado = valor },
+                            colors = RadioButtonDefaults.colors(
+                                selectedColor = Cafe,
+                                unselectedColor = Borde
+                            )
+                        )
+                    }
+                }
+            }
+
+            // Registrar incidencia: lleva a su propia pantalla
+            TarjetaWood(
+                modifier = Modifier
+                    .padding(bottom = 10.dp)
+                    .clickable { onIncident() }
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-
-                    Icon(Icons.Default.LocalShipping, null, tint = Cafe)
+                    IconoCuadro(
+                        Icons.Outlined.Warning,
+                        fondo = FondoRojo,
+                        color = Rojo
+                    )
 
                     Spacer(Modifier.width(12.dp))
 
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(titulo, color = Texto, fontWeight = FontWeight.SemiBold)
-                        Text(descripcion, color = TextoSecundario, fontSize = 10.sp)
+                    Column(Modifier.weight(1f)) {
+                        Text("Registrar incidencia", color = Texto, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                        Text("Hubo un problema con la entrega", color = TextoSecundario, fontSize = 12.sp)
                     }
 
-                    RadioButton(
-                        selected = estado == valor,
-                        onClick = { estado = valor },
-                        colors = RadioButtonDefaults.colors(selectedColor = Cafe)
+                    Icon(
+                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = TextoSecundario
                     )
                 }
             }
-        }
 
-        TextButton(
-            onClick = onIncident,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(Icons.Default.Warning, null, tint = Naranja)
-            Spacer(Modifier.width(8.dp))
-            Text("Registrar incidencia", color = Naranja)
-        }
+            Spacer(Modifier.height(6.dp))
 
-        Spacer(Modifier.height(20.dp))
-
-        if (error != null) {
             InfoBanner(
-                "No se pudo guardar",
-                error,
-                FondoNaranja,
-                Naranja
+                "¿Ya entregaste?",
+                "Para marcarla como entregada, regresa al detalle y usa Registrar entrega."
             )
-            Spacer(Modifier.height(15.dp))
+
+            if (error != null) {
+                Spacer(Modifier.height(10.dp))
+                InfoBanner(
+                    "No se pudo guardar",
+                    error,
+                    colorFondo = FondoNaranja,
+                    colorTexto = Naranja,
+                    icono = Icons.Outlined.Warning
+                )
+            }
+
+            Spacer(Modifier.height(14.dp))
         }
 
-        PrimaryButton(
-            if (guardando) "Guardando..." else "Guardar estado",
-            Icons.Default.Check
+        // ---------- PARTE DE ABAJO: botón fijo ----------
+        HorizontalDivider(color = Borde)
+
+        Column(
+            modifier = Modifier
+                .background(Fondo)
+                .padding(horizontal = 18.dp, vertical = 10.dp)
         ) {
-            if (!guardando) {
-                onSave(estado)
+            PrimaryButton(
+                if (guardando) "Guardando..." else "Guardar estado",
+                Icons.Outlined.Check
+            ) {
+                if (!guardando) {
+                    onSave(estado)
+                }
             }
+
+            Text(
+                "Podrás cambiarlo de nuevo si te equivocas.",
+                color = TextoSecundario,
+                fontSize = 12.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp)
+            )
         }
     }
 }
