@@ -64,4 +64,7 @@ dependencies {
 
 // Estados de ciclo de vida
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.4")
+
+    // Pruebas unitarias (solo para pruebas, no va dentro de la app)
+    testImplementation("junit:junit:4.13.2")
 }
