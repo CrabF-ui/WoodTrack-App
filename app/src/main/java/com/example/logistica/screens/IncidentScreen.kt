@@ -1,13 +1,17 @@
 package com.example.logistica.screens
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.HighlightOff
+import androidx.compose.material.icons.outlined.Inventory2
+import androidx.compose.material.icons.outlined.MoreHoriz
+import androidx.compose.material.icons.outlined.PersonOff
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,10 +33,10 @@ fun IncidentScreen(
 ) {
 
     val motivos = listOf(
-        "Cliente rechazó",
-        "Cliente ausente",
-        "Producto dañado",
-        "Otro"
+        "Cliente rechazó" to Icons.Outlined.HighlightOff,
+        "Cliente ausente" to Icons.Outlined.PersonOff,
+        "Producto dañado" to Icons.Outlined.Inventory2,
+        "Otro" to Icons.Outlined.MoreHoriz
     )
 
     var motivo by remember { mutableStateOf("Cliente ausente") }
@@ -45,151 +49,160 @@ fun IncidentScreen(
             .background(Fondo)
             .statusBarsPadding()
             .navigationBarsPadding()
-            .imePadding()
-            .verticalScroll(rememberScrollState())
-            .padding(18.dp)
+            .imePadding()              // el botón sube con el teclado
     ) {
 
         if (entrega == null) {
-            ScreenHeader("Registrar incidencia", "", onBack)
-            Text(
-                "No se encontró la entrega. Regresa y toca Sincronizar.",
-                color = TextoSecundario,
-                fontSize = 13.sp
-            )
+            Column(Modifier.padding(18.dp)) {
+                ScreenHeader("Registrar incidencia", "", onBack)
+                Text(
+                    "No se encontró la entrega. Regresa y toca Sincronizar.",
+                    color = TextoSecundario,
+                    fontSize = 13.sp
+                )
+            }
             return@Column
         }
 
-        ScreenHeader(
-            "Registrar incidencia",
-            "Pedido #${entrega.pedido.id} · ${entrega.pedido.cliente}",
-            onBack
-        )
+        // ---------- PARTE DE ARRIBA: motivos y notas con scroll ----------
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(start = 18.dp, end = 18.dp, top = 14.dp)
+        ) {
 
-        Text(
-            "¿Qué ocurrió?",
-            fontSize = 18.sp,
-            color = Texto,
-            fontWeight = FontWeight.SemiBold
-        )
+            ScreenHeader(
+                "Registrar incidencia",
+                "Pedido #${entrega.pedido.id} · ${entrega.pedido.cliente}",
+                onBack
+            )
 
-        Text(
-            "La entrega se cerrará y planta verá el motivo.",
-            fontSize = 11.sp,
-            color = TextoSecundario
-        )
+            Text(
+                "¿Qué ocurrió?",
+                fontSize = 20.sp,
+                color = Texto,
+                fontWeight = FontWeight.Bold
+            )
 
-        Spacer(Modifier.height(18.dp))
+            Text(
+                "Selecciona un motivo para informar a planta. La entrega se cerrará.",
+                fontSize = 13.sp,
+                color = TextoSecundario
+            )
 
-        motivos.forEach { opcion ->
+            Spacer(Modifier.height(16.dp))
 
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 9.dp),
-                shape = RoundedCornerShape(13.dp),
-                colors = CardDefaults.cardColors(containerColor = Blanco),
-                border = if (motivo == opcion) BorderStroke(1.5.dp, Cafe) else null
-            ) {
+            motivos.forEach { (opcion, icono) ->
 
-                Row(
+                val seleccionada = motivo == opcion
+
+                TarjetaWood(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-
-                    Icon(
-                        when (opcion) {
-                            "Producto dañado" -> Icons.Default.Warning
-                            "Otro" -> Icons.Default.MoreHoriz
-                            else -> Icons.Default.Person
-                        },
-                        null,
-                        tint = Cafe
-                    )
-
-                    Spacer(Modifier.width(12.dp))
-
-                    Text(
-                        opcion,
-                        modifier = Modifier.weight(1f),
-                        color = Texto,
-                        fontSize = 13.sp
-                    )
-
-                    RadioButton(
-                        selected = motivo == opcion,
-                        onClick = {
+                        .padding(bottom = 10.dp)
+                        .clickable {
                             motivo = opcion
                             errorLocal = null
                         },
-                        colors = RadioButtonDefaults.colors(selectedColor = Cafe)
-                    )
+                    seleccionada = seleccionada
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconoCuadro(icono)
+
+                        Spacer(Modifier.width(12.dp))
+
+                        Text(
+                            opcion,
+                            modifier = Modifier.weight(1f),
+                            color = Texto,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 15.sp
+                        )
+
+                        RadioButton(
+                            selected = seleccionada,
+                            onClick = {
+                                motivo = opcion
+                                errorLocal = null
+                            },
+                            colors = RadioButtonDefaults.colors(
+                                selectedColor = Cafe,
+                                unselectedColor = Borde
+                            )
+                        )
+                    }
                 }
             }
+
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                if (motivo == "Otro") "Notas (obligatorio)" else "Notas",
+                fontWeight = FontWeight.SemiBold,
+                color = Texto,
+                fontSize = 14.sp
+            )
+
+            OutlinedTextField(
+                value = notas,
+                onValueChange = {
+                    notas = it
+                    errorLocal = null
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                placeholder = {
+                    Text("Ej. Llamé dos veces y esperé 15 minutos", fontSize = 13.sp)
+                },
+                minLines = 3,
+                shape = RoundedCornerShape(10.dp),
+                colors = coloresCampo()
+            )
+
+            val mensajeError = errorLocal ?: error
+            if (mensajeError != null) {
+                Spacer(Modifier.height(12.dp))
+                InfoBanner(
+                    "No se pudo registrar",
+                    mensajeError,
+                    colorFondo = FondoNaranja,
+                    colorTexto = Naranja,
+                    icono = Icons.Outlined.Warning
+                )
+            }
+
+            Spacer(Modifier.height(14.dp))
         }
 
-        Spacer(Modifier.height(10.dp))
+        // ---------- PARTE DE ABAJO: botón fijo ----------
+        HorizontalDivider(color = Borde)
 
-        Text(
-            if (motivo == "Otro") "Notas (obligatorio)" else "Notas",
-            fontWeight = FontWeight.SemiBold,
-            color = Texto,
-            fontSize = 12.sp
-        )
-
-        OutlinedTextField(
-            value = notas,
-            onValueChange = {
-                notas = it
-                errorLocal = null
-            },
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 7.dp),
-            placeholder = {
-                Text("Ej. Llamé dos veces y esperé 15 minutos", fontSize = 12.sp)
-            },
-            minLines = 3,
-            shape = RoundedCornerShape(13.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Cafe,
-                unfocusedBorderColor = Blanco,
-                focusedContainerColor = Blanco,
-                unfocusedContainerColor = Blanco
-            )
-        )
-
-        Spacer(Modifier.height(20.dp))
-
-        val mensajeError = errorLocal ?: error
-        if (mensajeError != null) {
-            InfoBanner(
-                "No se pudo registrar",
-                mensajeError,
-                FondoNaranja,
-                Naranja
-            )
-            Spacer(Modifier.height(15.dp))
-        }
-
-        PrimaryButton(
-            if (guardando) "Registrando..." else "Registrar incidencia",
-            Icons.Default.Warning
+                .background(Fondo)
+                .padding(horizontal = 18.dp, vertical = 10.dp)
         ) {
-            if (guardando) return@PrimaryButton
+            PrimaryButton(
+                if (guardando) "Registrando..." else "Registrar incidencia",
+                Icons.Outlined.Warning
+            ) {
+                if (guardando) return@PrimaryButton
 
-            // Lo que se manda a la API: motivo + notas
-            val texto = if (notas.isBlank()) motivo else "$motivo: ${notas.trim()}"
+                // Lo que se manda a la API: motivo + notas
+                val texto = if (notas.isBlank()) motivo else "$motivo: ${notas.trim()}"
 
-            when {
-                motivo == "Otro" && notas.isBlank() ->
-                    errorLocal = "Escribe en las notas qué pasó."
-                texto.length < 10 ->
-                    errorLocal = "El motivo debe tener al menos 10 caracteres."
-                else ->
-                    onSave(texto)
+                when {
+                    motivo == "Otro" && notas.isBlank() ->
+                        errorLocal = "Escribe en las notas qué pasó."
+                    texto.length < 10 ->
+                        errorLocal = "El motivo debe tener al menos 10 caracteres."
+                    else ->
+                        onSave(texto)
+                }
             }
         }
     }
