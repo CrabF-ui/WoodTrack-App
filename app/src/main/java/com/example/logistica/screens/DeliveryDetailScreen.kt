@@ -1,16 +1,25 @@
 package com.example.logistica.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.Chair
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.Navigation
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -53,13 +62,14 @@ fun DeliveryDetailScreen(
 
         val pedido = entrega.pedido
         val totalPiezas = pedido.productos.sumOf { it.cantidad }
+        val enCamino = entrega.estado == "en_camino"
 
         // ---------- PARTE DE ARRIBA: información con scroll ----------
         Column(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
-                .padding(start = 18.dp, end = 18.dp, top = 18.dp)
+                .padding(start = 18.dp, end = 18.dp, top = 14.dp)
         ) {
 
             ScreenHeader(
@@ -68,51 +78,39 @@ fun DeliveryDetailScreen(
                 onBack
             )
 
-            Card(
-                shape = RoundedCornerShape(17.dp),
-                colors = CardDefaults.cardColors(containerColor = Blanco)
-            ) {
+            // Productos
+            TarjetaWood {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(14.dp),
+                    modifier = Modifier.padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    IconoCuadro(
+                        Icons.Outlined.Chair,
+                        fondo = CafeClaro,
+                        color = Cafe,
+                        tamano = 64.dp
+                    )
 
-                    Box(
-                        modifier = Modifier
-                            .size(65.dp)
-                            .background(FondoNaranja, RoundedCornerShape(12.dp)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            Icons.Default.Home,
-                            null,
-                            tint = Cafe,
-                            modifier = Modifier.size(34.dp)
-                        )
-                    }
-
-                    Spacer(Modifier.width(12.dp))
+                    Spacer(Modifier.width(14.dp))
 
                     Column {
                         StatusLabel(textoEstado(entrega.estado))
 
-                        Spacer(Modifier.height(5.dp))
+                        Spacer(Modifier.height(6.dp))
 
                         Text(
                             pedido.productos.joinToString {
                                 "${it.cantidad} × ${it.producto}"
                             },
                             color = Texto,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 14.sp
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold
                         )
 
                         Text(
-                            "$totalPiezas piezas · Entrega ${entrega.fecha_asignada}",
+                            if (totalPiezas == 1) "1 pieza" else "$totalPiezas piezas",
                             color = TextoSecundario,
-                            fontSize = 11.sp
+                            fontSize = 12.sp
                         )
                     }
                 }
@@ -120,35 +118,48 @@ fun DeliveryDetailScreen(
 
             Spacer(Modifier.height(10.dp))
 
-            DetailCard(
-                "CLIENTE",
-                if (pedido.telefono.isNullOrBlank()) pedido.cliente
-                else "${pedido.cliente} · ${pedido.telefono}",
-                Icons.Default.Person
+            // Cliente, dirección y notas en una sola tarjeta
+            TarjetaWood {
+                Column(
+                    modifier = Modifier.padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    FilaDato(
+                        "CLIENTE",
+                        if (pedido.telefono.isNullOrBlank()) pedido.cliente
+                        else "${pedido.cliente} · ${pedido.telefono}",
+                        Icons.Outlined.Person
+                    )
+
+                    FilaDato(
+                        "DIRECCIÓN",
+                        pedido.direccion,
+                        Icons.Outlined.LocationOn
+                    )
+
+                    FilaDato(
+                        "NOTAS",
+                        entrega.notas ?: "Sin notas",
+                        Icons.Outlined.Description
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            InfoBanner(
+                "Antes de entregar",
+                "Verifica el producto antes de marcar la entrega.",
+                colorFondo = FondoNaranja,
+                colorTexto = Naranja,
+                icono = Icons.Outlined.Shield
             )
 
-            DetailCard(
-                "DIRECCIÓN",
-                pedido.direccion,
-                Icons.Default.LocationOn
-            )
-
-            DetailCard(
-                "NOTAS",
-                entrega.notas ?: "Sin notas",
-                Icons.Default.Description
-            )
-
-            Text(
-                "Verifica los productos antes de marcar la entrega.",
-                color = Naranja,
-                fontSize = 10.sp,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
+            Spacer(Modifier.height(14.dp))
         }
 
         // ---------- PARTE DE ABAJO: botones fijos ----------
-        HorizontalDivider(color = FondoNaranja)
+        HorizontalDivider(color = Borde)
 
         Column(
             modifier = Modifier
@@ -156,37 +167,117 @@ fun DeliveryDetailScreen(
                 .padding(horizontal = 18.dp, vertical = 10.dp)
         ) {
 
-            // Solo se puede entregar si está "en camino"
-            if (entrega.estado == "en_camino") {
+            if (enCamino) {
+                // En camino: lo principal es registrar la entrega
                 PrimaryButton(
                     "Registrar entrega",
-                    Icons.Default.CheckCircle,
+                    Icons.Outlined.CheckCircle,
                     onDeliver
                 )
 
                 Spacer(Modifier.height(8.dp))
+
+                // Maps y Actualizar estado lado a lado
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    BotonChico(
+                        "Maps",
+                        Icons.Outlined.Navigation,
+                        Modifier.weight(1f)
+                    ) {
+                        onMap(pedido.direccion)
+                    }
+
+                    BotonChico(
+                        "Actualizar estado",
+                        Icons.Outlined.Sync,
+                        Modifier.weight(1f),
+                        onUpdate
+                    )
+                }
+            } else {
+                // Pendiente: igual que en Figma
+                SecondaryButton(
+                    "Abrir en Google Maps",
+                    { onMap(pedido.direccion) },
+                    Icons.Outlined.Navigation
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                PrimaryButton(
+                    "Actualizar estado",
+                    Icons.Outlined.Sync,
+                    onUpdate
+                )
             }
-
-            PrimaryButton(
-                "Abrir en Google Maps",
-                Icons.Default.Navigation
-            ) {
-                onMap(pedido.direccion)
-            }
-
-            Spacer(Modifier.height(8.dp))
-
-            SecondaryButton(
-                "Actualizar estado",
-                onUpdate
-            )
 
             TextButton(
                 onClick = onIncident,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Registrar incidencia", color = Rojo)
+                Text(
+                    "Registrar incidencia",
+                    color = Rojo,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
+    }
+}
+
+// Una fila de dato: ícono en cuadrito + título chico + texto
+@Composable
+private fun FilaDato(
+    titulo: String,
+    texto: String,
+    icono: ImageVector
+) {
+    Row(verticalAlignment = Alignment.Top) {
+        IconoCuadro(icono)
+
+        Spacer(Modifier.width(12.dp))
+
+        Column {
+            Text(
+                titulo,
+                fontSize = 10.sp,
+                color = TextoSecundario,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.5.sp
+            )
+
+            Spacer(Modifier.height(2.dp))
+
+            Text(
+                texto,
+                fontSize = 14.sp,
+                color = Texto
+            )
+        }
+    }
+}
+
+// Botón blanco con borde, más chico, para poner dos lado a lado
+@Composable
+private fun BotonChico(
+    texto: String,
+    icono: ImageVector,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = modifier.height(48.dp),
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(1.dp, Cafe.copy(alpha = 0.45f)),
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = Blanco,
+            contentColor = CafeOscuro
+        ),
+        contentPadding = PaddingValues(horizontal = 8.dp)
+    ) {
+        Icon(icono, contentDescription = null, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(6.dp))
+        Text(texto, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
     }
 }
