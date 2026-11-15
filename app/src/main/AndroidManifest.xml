@@ -3,6 +3,8 @@
 
     <!-- Permiso para conectarse a Internet -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Permiso para mostrar notificaciones (Android 13 o más nuevo) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="true"
