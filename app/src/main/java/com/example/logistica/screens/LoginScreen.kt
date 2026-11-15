@@ -8,24 +8,25 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.logistica.components.PrimaryButton
+import com.example.logistica.components.coloresCampo
 import com.example.logistica.ui.theme.*
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.ui.text.input.VisualTransformation
 
 @Composable
 fun LoginScreen(
@@ -37,135 +38,101 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var verPassword by remember { mutableStateOf(false) }
 
-    val colorescampo = OutlinedTextFieldDefaults.colors(
-        focusedBorderColor = Cafe,
-        unfocusedBorderColor = Blanco,
-        focusedContainerColor = Blanco,
-        unfocusedContainerColor = Blanco
-    )
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Fondo)
+            .background(Blanco)
             .statusBarsPadding()
             .navigationBarsPadding()   // no quedar debajo de ◁ ○ □
             .imePadding()              // subir cuando sale el teclado
             .verticalScroll(rememberScrollState())
-            .padding(20.dp)
+            .padding(horizontal = 24.dp)
     ) {
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(64.dp))
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-
-            Box(
-                modifier = Modifier
-                    .size(42.dp)
-                    .background(CafeOscuro, RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("TM", color = Blanco, fontWeight = FontWeight.Bold)
-            }
-
-            Spacer(Modifier.width(10.dp))
-
-            Column {
-                Text(
-                    "Taller Madero",
-                    fontWeight = FontWeight.Bold,
-                    color = Texto,
-                    fontSize = 16.sp
-                )
-                Text(
-                    "Operación de planta y ruta",
-                    color = TextoSecundario,
-                    fontSize = 11.sp
-                )
-            }
-        }
-
-        Spacer(Modifier.height(25.dp))
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(120.dp)
-                .background(Color(0xFFE8D9C5), RoundedCornerShape(18.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                "TALLER MADERO",
-                color = Cafe,
-                fontSize = 23.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        Spacer(Modifier.height(20.dp))
-
+        // ---------- ENCABEZADO ----------
         Text(
-            "Tu jornada, bien organizada",
-            fontSize = 26.sp,
+            "WoodTrack",
+            fontSize = 30.sp,
+            fontWeight = FontWeight.Bold,
             color = Texto,
-            fontWeight = FontWeight.Medium,
-            lineHeight = 30.sp
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(6.dp))
 
         Text(
-            "Ingresa con el correo y la contraseña que te dio tu supervisor.",
+            "Acceso para choferes",
+            fontSize = 15.sp,
             color = TextoSecundario,
-            fontSize = 13.sp
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(Modifier.height(25.dp))
+        Spacer(Modifier.height(44.dp))
 
-        Text("Correo", fontWeight = FontWeight.SemiBold)
+        // ---------- CORREO ----------
+        Text(
+            "Correo electrónico",
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 14.sp,
+            color = Texto
+        )
 
         OutlinedTextField(
             value = correo,
             onValueChange = { correo = it },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 6.dp),
+                .padding(top = 8.dp),
             singleLine = true,
-            placeholder = { Text("chofer@ejemplo.com", fontSize = 13.sp) },
-            leadingIcon = { Icon(Icons.Default.Email, null) },
+            leadingIcon = {
+                Icon(Icons.Outlined.Person, null, tint = TextoSecundario)
+            },
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Next
             ),
-            shape = RoundedCornerShape(14.dp),
-            colors = colorescampo
+            shape = RoundedCornerShape(10.dp),
+            colors = coloresCampo()
         )
 
-        Spacer(Modifier.height(15.dp))
-//CONTRASEÑA
-        Text("Contraseña", fontWeight = FontWeight.SemiBold)
+        Spacer(Modifier.height(18.dp))
+
+        // ---------- CONTRASEÑA ----------
+        Text(
+            "Contraseña",
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 14.sp,
+            color = Texto
+        )
 
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 6.dp),
+                .padding(top = 8.dp),
             singleLine = true,
             visualTransformation = if (verPassword) {
                 VisualTransformation.None
             } else {
                 PasswordVisualTransformation()
             },
+            leadingIcon = {
+                Icon(Icons.Outlined.Lock, null, tint = TextoSecundario)
+            },
             trailingIcon = {
                 IconButton(onClick = { verPassword = !verPassword }) {
                     Icon(
-                        if (verPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                        contentDescription = if (verPassword) "Ocultar contraseña" else "Mostrar contraseña"
+                        if (verPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                        contentDescription = if (verPassword) "Ocultar contraseña" else "Mostrar contraseña",
+                        tint = TextoSecundario
                     )
                 }
             },
-            leadingIcon = { Icon(Icons.Default.Lock, null) },
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Done
@@ -176,34 +143,38 @@ fun LoginScreen(
                     if (!cargando) onLogin(correo, password)
                 }
             ),
-            shape = RoundedCornerShape(14.dp),
-            colors = colorescampo
+            shape = RoundedCornerShape(10.dp),
+            colors = coloresCampo()
         )
 
         if (mensajeError != null) {
             Text(
                 mensajeError,
                 color = Rojo,
-                fontSize = 12.sp,
-                modifier = Modifier.padding(top = 6.dp)
+                fontSize = 13.sp,
+                modifier = Modifier.padding(top = 8.dp)
             )
         }
 
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.height(24.dp))
 
+        // ---------- BOTÓN ----------
         PrimaryButton(if (cargando) "Ingresando..." else "Ingresar") {
             if (!cargando) {
                 onLogin(correo, password)
             }
         }
 
-        Spacer(Modifier.height(15.dp))
+        Spacer(Modifier.height(22.dp))
 
         Text(
-            "¿No puedes ingresar? Habla con tu supervisor.",
+            "¿Necesitas ayuda? Contacta a tu supervisor.",
             color = TextoSecundario,
-            fontSize = 11.sp,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
+            fontSize = 12.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
         )
+
+        Spacer(Modifier.height(24.dp))
     }
 }
