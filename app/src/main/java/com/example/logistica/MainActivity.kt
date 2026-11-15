@@ -18,6 +18,9 @@ import com.example.logistica.data.remote.RetrofitClient
 import com.example.logistica.data.remote.TokenManager
 import com.example.logistica.data.repository.DeliveryRepository
 import com.example.logistica.navigation.AppNavigation
+import com.example.logistica.ui.theme.Blanco
+import com.example.logistica.ui.theme.Cafe
+import com.example.logistica.ui.theme.CafeOscuro
 import com.example.logistica.ui.theme.Fondo
 
 class MainActivity : ComponentActivity() {
@@ -30,7 +33,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Barras del sistema transparentes con iconos oscuros (edge-to-edge)
+        // Barras del sistema transparentes con íconos oscuros (edge-to-edge).
+        // Así la barra de la hora y la de abajo toman el color del fondo de la app.
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.light(
                 Color.TRANSPARENT,
@@ -52,15 +56,15 @@ class MainActivity : ComponentActivity() {
             tokenManager
         )
 
-        // Interfaz de la aplicación
+        // Interfaz de la aplicación (colores del estilo Figma)
         setContent {
 
             MaterialTheme(
                 colorScheme = lightColorScheme(
-                    primary = androidx.compose.ui.graphics.Color(0xFF70452F),
-                    secondary = androidx.compose.ui.graphics.Color(0xFFB87524),
+                    primary = CafeOscuro,
+                    secondary = Cafe,
                     background = Fondo,
-                    surface = androidx.compose.ui.graphics.Color.White
+                    surface = Blanco
                 )
             ) {
 
@@ -80,7 +84,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // Abrir Google Maps
     // Abrir Google Maps con la dirección del pedido
     private fun abrirGoogleMaps(direccion: String) {
 
