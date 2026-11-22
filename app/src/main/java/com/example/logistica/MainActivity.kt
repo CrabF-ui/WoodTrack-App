@@ -1,3 +1,4 @@
+
 package com.example.logistica.com.example.logistica
 
 import android.Manifest
@@ -17,6 +18,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import com.example.logistica.data.remote.ApiService
@@ -29,6 +34,7 @@ import com.example.logistica.ui.theme.Blanco
 import com.example.logistica.ui.theme.Cafe
 import com.example.logistica.ui.theme.CafeOscuro
 import com.example.logistica.ui.theme.Fondo
+import androidx.core.net.toUri
 
 class MainActivity : ComponentActivity() {
 
@@ -37,10 +43,11 @@ class MainActivity : ComponentActivity() {
     private lateinit var apiService: ApiService
     private lateinit var repository: DeliveryRepository
 
-    // Lanzador para pedir el permiso de notificaciones (Android 13+), como en la guía
+    // Lanzador para pedir el permiso de notificaciones (Android 13+)
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
+
         if (!isGranted) {
             Toast.makeText(
                 this,
@@ -55,8 +62,14 @@ class MainActivity : ComponentActivity() {
 
         // Barras del sistema transparentes con íconos oscuros (edge-to-edge)
         enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
-            navigationBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
+            statusBarStyle = SystemBarStyle.light(
+                Color.TRANSPARENT,
+                Color.TRANSPARENT
+            ),
+            navigationBarStyle = SystemBarStyle.light(
+                Color.TRANSPARENT,
+                Color.TRANSPARENT
+            )
         )
 
         // 1. Crear el canal de notificaciones
@@ -72,6 +85,7 @@ class MainActivity : ComponentActivity() {
 
         // Interfaz de la aplicación
         setContent {
+
             MaterialTheme(
                 colorScheme = lightColorScheme(
                     primary = CafeOscuro,
@@ -80,16 +94,35 @@ class MainActivity : ComponentActivity() {
                     surface = Blanco
                 )
             ) {
+
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = Fondo
                 ) {
-                    AppNavigation(
-                        repository = repository,
-                        abrirMapa = { direccion ->
-                            abrirGoogleMaps(direccion)
-                        }
-                    )
+
+                    // Control de la pantalla de carga
+                    var mostrarPantallaCarga by remember {
+                        mutableStateOf(true)
+                    }
+
+                    if (mostrarPantallaCarga) {
+
+                        PantallaCarga(
+                            onCargaTerminada = {
+                                mostrarPantallaCarga = false
+                            }
+                        )
+
+                    } else {
+
+                        // Navegación principal de WoodTrack
+                        AppNavigation(
+                            repository = repository,
+                            abrirMapa = { direccion ->
+                                abrirGoogleMaps(direccion)
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -97,21 +130,31 @@ class MainActivity : ComponentActivity() {
 
     // El permiso POST_NOTIFICATIONS solo existe desde Android 13 (API 33)
     private fun checkNotificationPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-            != PackageManager.PERMISSION_GRANTED
+
+        if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
         ) {
-            requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+
+            requestPermissionLauncher.launch(
+                Manifest.permission.POST_NOTIFICATIONS
+            )
         }
     }
 
     // Abrir Google Maps con la dirección del pedido
     private fun abrirGoogleMaps(direccion: String) {
+
         val consulta = Uri.encode(direccion)
+
         val intent = Intent(
             Intent.ACTION_VIEW,
-            Uri.parse("https://www.google.com/maps/search/?api=1&query=$consulta")
+            "https://www.google.com/maps/search/?api=1&query=$consulta".toUri()
         )
+
         startActivity(intent)
     }
 }

@@ -3,11 +3,14 @@
 
     <!-- Permiso para conectarse a Internet -->
     <uses-permission android:name="android.permission.INTERNET" />
+
     <!-- Permiso para mostrar notificaciones (Android 13 o más nuevo) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:label="WoodTrack"
         android:supportsRtl="true"
         android:usesCleartextTraffic="true"
@@ -18,10 +21,13 @@
             android:authorities="${applicationId}.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
+
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
+
         </provider>
+
         <activity
             android:name=".com.example.logistica.MainActivity"
             android:exported="true">
